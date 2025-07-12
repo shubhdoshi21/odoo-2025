@@ -163,10 +163,41 @@ class AuthService {
   }
 
   // Update user profile
-  async updateProfile(userId, updateData) {
+  async updateProfile(userId, updateData, req) {
     try {
       // Remove sensitive fields from update data
       const { password, email, ...safeUpdateData } = updateData;
+
+      // Handle file upload if present
+      if (req && req.file) {
+        safeUpdateData.profilePhoto = req.file.filename;
+      }
+
+      // Handle array fields from FormData (they come as key[0], key[1], etc.)
+      const processArrayFields = (data, fieldName) => {
+        const arrayData = [];
+        Object.keys(data).forEach((key) => {
+          if (key.startsWith(`${fieldName}[`)) {
+            const index = parseInt(key.match(/\[(\d+)\]/)[1]);
+            arrayData[index] = data[key];
+          }
+        });
+        return arrayData.length > 0 ? arrayData : data[fieldName];
+      };
+
+      // Process array fields
+      safeUpdateData.offeredSkills = processArrayFields(
+        safeUpdateData,
+        "offeredSkills"
+      );
+      safeUpdateData.wantedSkills = processArrayFields(
+        safeUpdateData,
+        "wantedSkills"
+      );
+      safeUpdateData.availability = processArrayFields(
+        safeUpdateData,
+        "availability"
+      );
 
       // Convert skill names to IDs if they are provided as strings
       if (

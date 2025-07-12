@@ -4,6 +4,8 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 // Import routes
@@ -17,8 +19,12 @@ const adminRoutes = require("./routes/admin");
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Security middleware
-app.use(helmet());
+// Security middleware - temporarily disable CSP for debugging
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 
 app.use(cookieParser());
 
@@ -47,8 +53,36 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Static files
-app.use("/uploads", express.static("uploads"));
+// Static files with CORS headers
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+    res.header("Access-Control-Allow-Methods", "GET");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    next();
+  },
+  express.static("uploads")
+);
+
+// Dedicated route for profile images
+app.get("/api/profile-photo/:filename", (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, "uploads", filename);
+
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Image not found" });
+  }
+
+  // Set CORS headers
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Methods", "GET");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+
+  // Send the file
+  res.sendFile(filePath);
+});
 
 // Health check endpoint
 app.get("/health", (req, res) => {

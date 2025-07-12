@@ -74,8 +74,16 @@ const ProfilePage = () => {
       setOfferedSkills(extractSkillNames(currentUser.offeredSkills));
       setWantedSkills(extractSkillNames(currentUser.wantedSkills));
 
+      console.log("Profile photo URL:", currentUser.profilePhotoUrl);
+      console.log("Profile photo field:", currentUser.profilePhoto);
+
       if (currentUser.profilePhotoUrl) {
         setPreviewPhoto(currentUser.profilePhotoUrl);
+      } else if (currentUser.profilePhoto) {
+        // Fallback: construct URL manually if virtual not working
+        const photoUrl = `http://localhost:3001/api/profile-photo/${currentUser.profilePhoto}`;
+        console.log("Constructed photo URL:", photoUrl);
+        setPreviewPhoto(photoUrl);
       }
     }
   }, [currentUser]);
@@ -141,14 +149,24 @@ const ProfilePage = () => {
             key === "wantedSkills" ||
             key === "availability"
           ) {
-            formData.append(key, JSON.stringify(profileData[key]));
+            // Send skills as individual form fields, not as JSON string
+            if (Array.isArray(profileData[key])) {
+              profileData[key].forEach((item, index) => {
+                formData.append(`${key}[${index}]`, item);
+              });
+            }
           } else {
             formData.append(key, profileData[key]);
           }
         });
         formData.append("profilePhoto", profilePhoto);
 
-        console.log("Sending FormData with file");
+        console.log("Sending FormData with file:", profilePhoto.name);
+        console.log("FormData contents:");
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+
         await dispatch(updateProfile(formData)).unwrap();
       } else {
         // Send as JSON if no file upload
@@ -186,11 +204,29 @@ const ProfilePage = () => {
 
       {/* Profile Photo */}
       <Box display="flex" alignItems="center" mb={3}>
-        <Avatar
-          src={previewPhoto}
-          sx={{ width: 80, height: 80, mr: 2 }}
-          alt="Profile"
-        />
+        {previewPhoto ? (
+          <img
+            src={previewPhoto}
+            alt="Profile"
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginRight: 16,
+              border: "2px solid #ddd",
+            }}
+            onError={(e) => {
+              console.error("Image failed to load:", previewPhoto);
+              console.error("Error event:", e);
+            }}
+            onLoad={() => {
+              console.log("Image loaded successfully:", previewPhoto);
+            }}
+          />
+        ) : (
+          <Avatar sx={{ width: 80, height: 80, mr: 2 }} alt="Profile" />
+        )}
         <Button variant="contained" component="label">
           Upload Photo
           <input
@@ -213,6 +249,15 @@ const ProfilePage = () => {
           </Button>
         )}
       </Box>
+
+      {/* Debug info */}
+      {previewPhoto && (
+        <Box mb={2}>
+          <Typography variant="body2" color="textSecondary">
+            Debug: Image URL: {previewPhoto}
+          </Typography>
+        </Box>
+      )}
 
       {/* Name */}
       <TextField
