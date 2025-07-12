@@ -10,6 +10,8 @@ import {
   Grid,
   Alert,
   Divider,
+  Breadcrumbs,
+  Link,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -17,8 +19,9 @@ import {
   Category,
   TrendingUp,
   Person,
+  School,
 } from "@mui/icons-material";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getSkillById } from "../store/slices/skillSlice";
 import LoadingSpinner from "../components/common/LoadingSpinner";
@@ -27,8 +30,10 @@ const SkillDetailPage = () => {
   const { skillId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  const { currentSkill, isLoading, error } = useSelector((state) => state.skills);
+
+  const { currentSkill, isLoading, error } = useSelector(
+    (state) => state.skills
+  );
 
   useEffect(() => {
     if (skillId) {
@@ -89,6 +94,19 @@ const SkillDetailPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Breadcrumbs */}
+      <Breadcrumbs sx={{ mb: 3 }}>
+        <Link
+          component={RouterLink}
+          to="/skills"
+          color="inherit"
+          underline="hover"
+        >
+          Skills
+        </Link>
+        <Typography color="text.primary">{currentSkill.name}</Typography>
+      </Breadcrumbs>
+
       {/* Back Button */}
       <Button
         variant="outlined"
@@ -116,15 +134,11 @@ const SkillDetailPage = () => {
                 />
                 <Chip
                   icon={<Star />}
-                  label={`${currentSkill.usageCount || 0} users`}
+                  label={`${currentSkill.userCount || 0} users`}
                   variant="outlined"
                 />
                 {currentSkill.isActive === false && (
-                  <Chip
-                    label="Inactive"
-                    color="error"
-                    size="small"
-                  />
+                  <Chip label="Inactive" color="error" size="small" />
                 )}
               </Box>
               {currentSkill.description && (
@@ -163,6 +177,7 @@ const SkillDetailPage = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
+                <School sx={{ mr: 1, verticalAlign: "middle" }} />
                 Skill Information
               </Typography>
               <Divider sx={{ mb: 2 }} />
@@ -171,25 +186,32 @@ const SkillDetailPage = () => {
                   <Typography variant="subtitle2" color="text.secondary">
                     Category
                   </Typography>
-                  <Typography variant="body1">
-                    {currentSkill.category}
-                  </Typography>
+                  <Chip
+                    label={currentSkill.category}
+                    color={getCategoryColor(currentSkill.category)}
+                    size="small"
+                  />
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Usage Count
+                    Users with this Skill
                   </Typography>
-                  <Typography variant="body1">
-                    {currentSkill.usageCount || 0} users
-                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Star color="primary" fontSize="small" />
+                    <Typography variant="body1">
+                      {currentSkill.userCount || 0} users
+                    </Typography>
+                  </Box>
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
                     Status
                   </Typography>
-                  <Typography variant="body1">
-                    {currentSkill.isActive ? "Active" : "Inactive"}
-                  </Typography>
+                  <Chip
+                    label={currentSkill.isActive ? "Active" : "Inactive"}
+                    color={currentSkill.isActive ? "success" : "error"}
+                    size="small"
+                  />
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
@@ -199,6 +221,16 @@ const SkillDetailPage = () => {
                     {new Date(currentSkill.createdAt).toLocaleDateString()}
                   </Typography>
                 </Box>
+                {currentSkill.description && (
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Description
+                    </Typography>
+                    <Typography variant="body1">
+                      {currentSkill.description}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             </CardContent>
           </Card>
@@ -207,23 +239,38 @@ const SkillDetailPage = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Actions
+                <TrendingUp sx={{ mr: 1, verticalAlign: "middle" }} />
+                Quick Actions
               </Typography>
               <Divider sx={{ mb: 2 }} />
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <Button
                   variant="contained"
                   fullWidth
+                  startIcon={<Person />}
                   onClick={() => navigate(`/users?skill=${currentSkill._id}`)}
                 >
-                  Browse Users with this Skill
+                  Find Users with this Skill
                 </Button>
                 <Button
                   variant="outlined"
                   fullWidth
-                  onClick={() => navigate("/swaps/new")}
+                  startIcon={<TrendingUp />}
+                  onClick={() =>
+                    navigate(`/users?skill=${currentSkill._id}&type=offered`)
+                  }
                 >
-                  Create Skill Swap Request
+                  Find Users Offering this Skill
+                </Button>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<School />}
+                  onClick={() =>
+                    navigate(`/users?skill=${currentSkill._id}&type=wanted`)
+                  }
+                >
+                  Find Users Wanting this Skill
                 </Button>
                 <Button
                   variant="outlined"

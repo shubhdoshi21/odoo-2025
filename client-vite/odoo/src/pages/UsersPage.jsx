@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Container,
   Grid,
@@ -28,7 +28,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getAllUsers, searchUsers } from "../store/slices/userSlice";
+import { getAllUsers } from "../store/slices/userSlice";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const UsersPage = () => {
@@ -44,24 +44,48 @@ const UsersPage = () => {
   const [availability, setAvailability] = useState(
     searchParams.get("availability") || ""
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 12;
 
-  // Load users on component mount
+  // Load all users on component mount (we'll filter on frontend)
   useEffect(() => {
-    dispatch(getAllUsers({ page: 1, limit: 12 }));
+    dispatch(getAllUsers({ page: 1, limit: 1000, isPublic: true })); // Get more users for frontend filtering
   }, [dispatch]);
 
-  useEffect(() => {
-    const params = {};
-    if (searchQuery) params.q = searchQuery;
-    if (location) params.location = location;
-    if (availability) params.availability = availability;
+  // Filter and search users on frontend
+  const filteredUsers = useMemo(() => {
+    if (!users || users.length === 0) return [];
 
-    if (Object.keys(params).length > 0) {
-      dispatch(searchUsers(params));
-    } else {
-      dispatch(getAllUsers({ page: 1, limit: 12 }));
-    }
-  }, [dispatch, searchQuery, location, availability]);
+    return users.filter((user) => {
+      // Search by name
+      const matchesSearch =
+        !searchQuery ||
+        user.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Filter by location
+      const matchesLocation =
+        !location ||
+        (user.location &&
+          user.location.toLowerCase().includes(location.toLowerCase()));
+
+      // Filter by availability
+      const matchesAvailability =
+        !availability ||
+        (user.availability && user.availability.includes(availability));
+
+      return matchesSearch && matchesLocation && matchesAvailability;
+    });
+  }, [users, searchQuery, location, availability]);
+
+  // Paginate filtered users
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * usersPerPage;
+    const endIndex = startIndex + usersPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, currentPage, usersPerPage]);
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -70,22 +94,11 @@ const UsersPage = () => {
     if (location) params.set("location", location);
     if (availability) params.set("availability", availability);
     setSearchParams(params);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handlePageChange = (event, value) => {
-    const params = { page: value, limit: 12 };
-    if (searchQuery) params.q = searchQuery;
-    if (location) params.location = location;
-    if (availability) params.availability = availability;
-
-    if (
-      Object.keys(params).filter((key) => key !== "page" && key !== "limit")
-        .length > 0
-    ) {
-      dispatch(searchUsers(params));
-    } else {
-      dispatch(getAllUsers(params));
-    }
+    setCurrentPage(value);
   };
 
   const clearFilters = () => {
@@ -93,7 +106,7 @@ const UsersPage = () => {
     setLocation("");
     setAvailability("");
     setSearchParams({});
-    dispatch(getAllUsers({ page: 1, limit: 12 }));
+    setCurrentPage(1);
   };
 
   if (isLoading) {
@@ -110,6 +123,13 @@ const UsersPage = () => {
         <Typography variant="body1" color="text.secondary">
           Find people to exchange skills with
         </Typography>
+        {users.length > 0 && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Showing {paginatedUsers.length} of {filteredUsers.length} users
+            {filteredUsers.length !== users.length &&
+              ` (filtered from ${users.length} total)`}
+          </Typography>
+        )}
       </Box>
 
       {/* Search and Filters */}
@@ -190,10 +210,10 @@ const UsersPage = () => {
       </Card>
 
       {/* Users Grid */}
-      {users.length > 0 ? (
+      {paginatedUsers.length > 0 ? (
         <>
           <Grid container spacing={3}>
-            {users.map((user) => (
+            {paginatedUsers.map((user) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={user._id}>
                 <Card
                   sx={{
@@ -343,11 +363,11 @@ const UsersPage = () => {
           </Grid>
 
           {/* Pagination */}
-          {pagination.pages > 1 && (
+          {totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
               <Pagination
-                count={pagination.pages}
-                page={pagination.page}
+                count={totalPages}
+                page={currentPage}
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
@@ -358,10 +378,14 @@ const UsersPage = () => {
       ) : (
         <Box sx={{ textAlign: "center", py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            No users found
+            {filteredUsers.length === 0 && users.length > 0
+              ? "No users match your search criteria"
+              : "No users found"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Try adjusting your search criteria
+            {filteredUsers.length === 0 && users.length > 0
+              ? "Try adjusting your search criteria"
+              : "No users are currently available"}
           </Typography>
         </Box>
       )}

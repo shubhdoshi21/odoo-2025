@@ -38,14 +38,14 @@ const swapService = {
   },
 
   // Reject swap
-  rejectSwap: async (swapId) => {
-    const response = await api.patch(`/swaps/${swapId}/reject`);
+  rejectSwap: async (swapId, reason = "") => {
+    const response = await api.patch(`/swaps/${swapId}/reject`, { reason });
     return response;
   },
 
   // Cancel swap
-  cancelSwap: async (swapId) => {
-    const response = await api.patch(`/swaps/${swapId}/cancel`);
+  cancelSwap: async (swapId, reason = "") => {
+    const response = await api.patch(`/swaps/${swapId}/cancel`, { reason });
     return response;
   },
 

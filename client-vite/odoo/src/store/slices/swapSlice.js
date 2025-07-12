@@ -103,9 +103,9 @@ export const acceptSwap = createAsyncThunk(
 
 export const rejectSwap = createAsyncThunk(
   "swaps/rejectSwap",
-  async (swapId, thunkAPI) => {
+  async ({ swapId, reason }, thunkAPI) => {
     try {
-      const response = await swapService.rejectSwap(swapId);
+      const response = await swapService.rejectSwap(swapId, reason);
       return response.data;
     } catch (error) {
       const message =
@@ -119,9 +119,9 @@ export const rejectSwap = createAsyncThunk(
 
 export const cancelSwap = createAsyncThunk(
   "swaps/cancelSwap",
-  async (swapId, thunkAPI) => {
+  async ({ swapId, reason }, thunkAPI) => {
     try {
-      const response = await swapService.cancelSwap(swapId);
+      const response = await swapService.cancelSwap(swapId, reason);
       return response.data;
     } catch (error) {
       const message =

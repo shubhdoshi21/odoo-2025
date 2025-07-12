@@ -79,7 +79,7 @@ class SwapController {
         });
       }
 
-      const { swapId } = req.params;
+      const { id: swapId } = req.params;
       const userId = req.user.id;
 
       const swap = await SwapService.getSwapById(swapId, userId);
@@ -152,7 +152,7 @@ class SwapController {
         });
       }
 
-      const { swapId } = req.params;
+      const { id: swapId } = req.params;
       const updateData = req.body;
       const userId = req.user.id;
 
@@ -192,7 +192,7 @@ class SwapController {
         });
       }
 
-      const { swapId } = req.params;
+      const { id: swapId } = req.params;
       const userId = req.user.id;
 
       const swap = await SwapService.acceptSwap(swapId, userId);
@@ -231,7 +231,7 @@ class SwapController {
         });
       }
 
-      const { swapId } = req.params;
+      const { id: swapId } = req.params;
       const { reason } = req.body;
       const userId = req.user.id;
 
@@ -271,7 +271,7 @@ class SwapController {
         });
       }
 
-      const { swapId } = req.params;
+      const { id: swapId } = req.params;
       const { reason } = req.body;
       const userId = req.user.id;
 
@@ -311,7 +311,7 @@ class SwapController {
         });
       }
 
-      const { swapId } = req.params;
+      const { id: swapId } = req.params;
       const userId = req.user.id;
 
       const swap = await SwapService.completeSwap(swapId, userId);
@@ -350,7 +350,7 @@ class SwapController {
         });
       }
 
-      const { swapId } = req.params;
+      const { id: swapId } = req.params;
       const userId = req.user.id;
 
       const swap = await SwapService.deleteSwap(swapId, userId);

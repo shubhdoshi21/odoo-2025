@@ -290,15 +290,17 @@ const HomePage = () => {
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ textAlign: "center" }}>
                   <Avatar
-                    src={user.profilePicture}
-                    alt={user.username}
+                    src={user.profilePhotoUrl}
+                    alt={user.name}
                     sx={{ width: 80, height: 80, mx: "auto", mb: 2 }}
-                  />
+                  >
+                    {user.name?.[0]}
+                  </Avatar>
                   <Typography variant="h6" gutterBottom>
-                    {user.username}
+                    {user.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" paragraph>
-                    {user.bio || "Passionate skill sharer"}
+                    {user.location || "Passionate skill sharer"}
                   </Typography>
                   <Box
                     sx={{
@@ -310,8 +312,8 @@ const HomePage = () => {
                   >
                     <Star sx={{ color: "warning.main" }} />
                     <Typography variant="body2">
-                      {user.rating?.toFixed(1) || "4.5"} (
-                      {user.reviewCount || 0} reviews)
+                      {user.averageRating?.toFixed(1) || "0.0"} (
+                      {user.totalRatings || 0} reviews)
                     </Typography>
                   </Box>
                   <Button
@@ -370,7 +372,7 @@ const HomePage = () => {
               variant="contained"
               color="primary"
               size="large"
-              onClick={() => navigate("/swaps/create")}
+              onClick={() => navigate("/users")}
               sx={{ px: 4, py: 1.5 }}
             >
               Create Your First Swap

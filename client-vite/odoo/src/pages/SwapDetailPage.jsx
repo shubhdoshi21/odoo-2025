@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -23,7 +23,7 @@ import {
   Select,
   MenuItem,
   Alert,
-} from '@mui/material';
+} from "@mui/material";
 import {
   SwapHoriz,
   ArrowBack,
@@ -33,12 +33,11 @@ import {
   Schedule,
   Person,
   Send,
-} from '@mui/icons-material';
-import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { getSwapById } from '../store/slices/swapSlice';
-import { getUserById } from '../store/slices/userSlice';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+} from "@mui/icons-material";
+import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { getSwapById } from "../store/slices/swapSlice";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const SwapDetailPage = () => {
   const theme = useTheme();
@@ -47,18 +46,15 @@ const SwapDetailPage = () => {
   const { swapId } = useParams();
 
   const { currentSwap, isLoading: swapLoading } = useSelector(
-    state => state.swaps,
+    (state) => state.swaps
   );
-  const { currentUser: targetUser, isLoading: userLoading } = useSelector(
-    state => state.users,
-  );
-  const { user: currentUser } = useSelector(state => state.auth);
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
   const [requestData, setRequestData] = useState({
-    offeredSkill: '',
-    wantedSkill: '',
-    message: '',
+    offeredSkill: "",
+    wantedSkill: "",
+    message: "",
   });
 
   useEffect(() => {
@@ -67,24 +63,32 @@ const SwapDetailPage = () => {
     }
   }, [dispatch, swapId]);
 
+  // Debug: Log swap data
   useEffect(() => {
-    if (currentSwap?.targetUserId) {
-      dispatch(getUserById(currentSwap.targetUserId));
+    console.log("SwapDetailPage - currentSwap:", currentSwap);
+    if (currentSwap) {
+      console.log("SwapDetailPage - requester:", currentSwap.requester);
+      console.log("SwapDetailPage - responder:", currentSwap.responder);
+      console.log("SwapDetailPage - offeredSkill:", currentSwap.offeredSkill);
+      console.log(
+        "SwapDetailPage - requestedSkill:",
+        currentSwap.requestedSkill
+      );
     }
-  }, [dispatch, currentSwap]);
+  }, [currentSwap]);
 
-  const getStatusColor = status => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'accepted':
-        return 'info';
-      case 'completed':
-        return 'success';
-      case 'cancelled':
-        return 'error';
+      case "pending":
+        return "warning";
+      case "accepted":
+        return "info";
+      case "completed":
+        return "success";
+      case "cancelled":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
@@ -94,25 +98,25 @@ const SwapDetailPage = () => {
 
   const handleSubmitRequest = () => {
     // Handle request submission logic here
-    console.log('Submitting request:', requestData);
+    console.log("Submitting request:", requestData);
     setShowCreateRequestDialog(false);
-    setRequestData({ offeredSkill: '', wantedSkill: '', message: '' });
+    setRequestData({ offeredSkill: "", wantedSkill: "", message: "" });
   };
 
-  if (swapLoading || userLoading) {
+  if (swapLoading) {
     return <LoadingSpinner />;
   }
 
   if (!currentSwap) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ textAlign: 'center', py: 8 }}>
+        <Box sx={{ textAlign: "center", py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Swap not found
           </Typography>
           <Button
             variant="outlined"
-            onClick={() => navigate('/swaps')}
+            onClick={() => navigate("/swaps")}
             startIcon={<ArrowBack />}
           >
             Back to Swaps
@@ -142,15 +146,15 @@ const SwapDetailPage = () => {
         <CardContent>
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
               mb: 3,
             }}
           >
             <Box>
               <Typography variant="h4" gutterBottom>
-                {currentSwap.title}
+                Skill Swap Request
               </Typography>
               <Chip
                 label={
@@ -160,64 +164,52 @@ const SwapDetailPage = () => {
                 color={getStatusColor(currentSwap.status)}
                 sx={{ mb: 2 }}
               />
-              <Typography variant="body1" color="text.secondary" paragraph>
-                {currentSwap.description}
-              </Typography>
+              {currentSwap.message && (
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  {currentSwap.message}
+                </Typography>
+              )}
             </Box>
             <Button
               variant="outlined"
               startIcon={<ArrowBack />}
-              onClick={() => navigate('/swaps')}
+              onClick={() => navigate("/swaps")}
             >
               Back to Swaps
             </Button>
           </Box>
 
           {/* Skills Exchange */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <School color="primary" />
               <Typography variant="h6">
-                {currentSwap.offeredSkill?.name || 'Unknown Skill'}
+                {currentSwap.offeredSkill?.name ||
+                  `Skill ${
+                    currentSwap.offeredSkill?._id?.slice(-6) || "Unknown"
+                  }`}
               </Typography>
             </Box>
             <SwapHoriz color="action" />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <School color="primary" />
               <Typography variant="h6">
-                {currentSwap.wantedSkill?.name || 'Unknown Skill'}
+                {currentSwap.requestedSkill?.name ||
+                  `Skill ${
+                    currentSwap.requestedSkill?._id?.slice(-6) || "Unknown"
+                  }`}
               </Typography>
             </Box>
           </Box>
 
           {/* Swap Details */}
           <Grid container spacing={2}>
-            {currentSwap.duration && (
+            {currentSwap.scheduledDate && (
               <Grid item xs={12} sm={6} md={3}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <AccessTime color="action" />
                   <Typography variant="body2" color="text.secondary">
-                    {currentSwap.duration}
-                  </Typography>
-                </Box>
-              </Grid>
-            )}
-            {currentSwap.location && (
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <LocationOn color="action" />
-                  <Typography variant="body2" color="text.secondary">
-                    {currentSwap.location}
-                  </Typography>
-                </Box>
-              </Grid>
-            )}
-            {currentSwap.preferredTime && (
-              <Grid item xs={12} sm={6} md={3}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Schedule color="action" />
-                  <Typography variant="body2" color="text.secondary">
-                    {currentSwap.preferredTime}
+                    Scheduled: {new Date(currentSwap.scheduledDate).toLocaleDateString()}
                   </Typography>
                 </Box>
               </Grid>
@@ -227,70 +219,126 @@ const SwapDetailPage = () => {
                 Created: {new Date(currentSwap.createdAt).toLocaleDateString()}
               </Typography>
             </Grid>
+            {currentSwap.rejectedAt && (
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary">
+                  Rejected: {new Date(currentSwap.rejectedAt).toLocaleDateString()}
+                </Typography>
+              </Grid>
+            )}
+            {currentSwap.cancelledAt && (
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="body2" color="text.secondary">
+                  Cancelled: {new Date(currentSwap.cancelledAt).toLocaleDateString()}
+                </Typography>
+              </Grid>
+            )}
           </Grid>
+
+          {/* Additional Information */}
+          {(currentSwap.rejectionReason || currentSwap.cancellationReason) && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                {currentSwap.rejectionReason ? 'Rejection Reason:' : 'Cancellation Reason:'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {currentSwap.rejectionReason || currentSwap.cancellationReason}
+              </Typography>
+            </Box>
+          )}
         </CardContent>
       </Card>
 
       {/* Users Section */}
       <Grid container spacing={3}>
-        {/* Initiator */}
+        {/* Requester */}
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Swap Initiator
+                Swap Requester
               </Typography>
               <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
+                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
               >
                 <Avatar
-                  src={currentSwap.initiator?.profilePicture}
-                  alt={currentSwap.initiator?.username}
+                  src={currentSwap.requester?.profilePhotoUrl}
+                  alt={currentSwap.requester?.name || "Requester"}
                   sx={{ width: 60, height: 60 }}
                 >
-                  {currentSwap.initiator?.firstName?.[0]}
+                  {currentSwap.requester?.name?.[0] || "R"}
                 </Avatar>
                 <Box>
                   <Typography variant="h6">
-                    {currentSwap.initiator?.firstName}{' '}
-                    {currentSwap.initiator?.lastName}
+                    {currentSwap.requester?.name ||
+                      `User ${
+                        currentSwap.requester?._id?.slice(-6) || "Unknown"
+                      }`}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    @{currentSwap.initiator?.username}
+                    {currentSwap.requester?.email}
                   </Typography>
-                  {currentSwap.initiator?.location && (
+                  {currentSwap.requester?.location && (
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
+                        display: "flex",
+                        alignItems: "center",
                         gap: 0.5,
                         mt: 0.5,
                       }}
                     >
                       <LocationOn fontSize="small" color="action" />
                       <Typography variant="body2" color="text.secondary">
-                        {currentSwap.initiator.location}
+                        {currentSwap.requester.location}
                       </Typography>
                     </Box>
                   )}
                 </Box>
               </Box>
 
-              {currentSwap.initiator?.skills &&
-                currentSwap.initiator.skills.length > 0 && (
+              {currentSwap.requester?.offeredSkills &&
+                currentSwap.requester.offeredSkills.length > 0 && (
                   <Box>
                     <Typography variant="subtitle2" gutterBottom>
                       Skills Offered:
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {currentSwap.initiator.skills.map((skill, index) => (
-                        <Chip
-                          key={index}
-                          label={skill.name}
-                          size="small"
-                          variant="outlined"
-                        />
-                      ))}
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {currentSwap.requester.offeredSkills.map(
+                        (skill, index) => (
+                          <Chip
+                            key={index}
+                            label={
+                              typeof skill === "string" ? skill : skill.name
+                            }
+                            size="small"
+                            variant="outlined"
+                          />
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                )}
+
+              {currentSwap.requester?.wantedSkills &&
+                currentSwap.requester.wantedSkills.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Skills Wanted:
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {currentSwap.requester.wantedSkills.map(
+                        (skill, index) => (
+                          <Chip
+                            key={index}
+                            label={
+                              typeof skill === "string" ? skill : skill.name
+                            }
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        )
+                      )}
                     </Box>
                   </Box>
                 )}
@@ -298,96 +346,97 @@ const SwapDetailPage = () => {
           </Card>
         </Grid>
 
-        {/* Target User */}
+        {/* Responder */}
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Swap Partner
+                Swap Responder
               </Typography>
               <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
+                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
               >
                 <Avatar
-                  src={targetUser?.profilePicture}
-                  alt={targetUser?.username}
+                  src={currentSwap.responder?.profilePhotoUrl}
+                  alt={currentSwap.responder?.name || "Responder"}
                   sx={{ width: 60, height: 60 }}
                 >
-                  {targetUser?.firstName?.[0]}
+                  {currentSwap.responder?.name?.[0] || "R"}
                 </Avatar>
                 <Box>
                   <Typography variant="h6">
-                    {targetUser?.firstName} {targetUser?.lastName}
+                    {currentSwap.responder?.name ||
+                      `User ${
+                        currentSwap.responder?._id?.slice(-6) || "Unknown"
+                      }`}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    @{targetUser?.username}
+                    {currentSwap.responder?.email}
                   </Typography>
-                  {targetUser?.location && (
+                  {currentSwap.responder?.location && (
                     <Box
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
+                        display: "flex",
+                        alignItems: "center",
                         gap: 0.5,
                         mt: 0.5,
                       }}
                     >
                       <LocationOn fontSize="small" color="action" />
                       <Typography variant="body2" color="text.secondary">
-                        {targetUser.location}
+                        {currentSwap.responder.location}
                       </Typography>
                     </Box>
                   )}
                 </Box>
               </Box>
 
-              {targetUser?.skills && targetUser.skills.length > 0 && (
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Skills Offered:
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {targetUser.skills.map((skill, index) => (
-                      <Chip
-                        key={index}
-                        label={skill.name}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              )}
-
-              {targetUser?.wantedSkills &&
-                targetUser.wantedSkills.length > 0 && (
-                  <Box sx={{ mt: 2 }}>
+              {currentSwap.responder?.offeredSkills &&
+                currentSwap.responder.offeredSkills.length > 0 && (
+                  <Box>
                     <Typography variant="subtitle2" gutterBottom>
-                      Skills Wanted:
+                      Skills Offered:
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {targetUser.wantedSkills.map((skill, index) => (
-                        <Chip
-                          key={index}
-                          label={skill.name}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      ))}
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {currentSwap.responder.offeredSkills.map(
+                        (skill, index) => (
+                          <Chip
+                            key={index}
+                            label={
+                              typeof skill === "string" ? skill : skill.name
+                            }
+                            size="small"
+                            variant="outlined"
+                          />
+                        )
+                      )}
                     </Box>
                   </Box>
                 )}
 
-              <Box sx={{ mt: 2 }}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  startIcon={<Send />}
-                  onClick={handleCreateRequest}
-                >
-                  Create Swap Request
-                </Button>
-              </Box>
+              {currentSwap.responder?.wantedSkills &&
+                currentSwap.responder.wantedSkills.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Skills Wanted:
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {currentSwap.responder.wantedSkills.map(
+                        (skill, index) => (
+                          <Chip
+                            key={index}
+                            label={
+                              typeof skill === "string" ? skill : skill.name
+                            }
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                )}
             </CardContent>
           </Card>
         </Grid>
@@ -402,42 +451,42 @@ const SwapDetailPage = () => {
       >
         <DialogTitle>Create Swap Request</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
             <FormControl fullWidth>
               <InputLabel>My Offered Skill</InputLabel>
               <Select
                 value={requestData.offeredSkill}
                 label="My Offered Skill"
-                onChange={e =>
+                onChange={(e) =>
                   setRequestData({
                     ...requestData,
                     offeredSkill: e.target.value,
                   })
                 }
               >
-                {currentUser?.skills?.map(skill => (
-                  <MenuItem key={skill._id} value={skill._id}>
-                    {skill.name}
+                {currentUser?.offeredSkills?.map((skill) => (
+                  <MenuItem key={skill._id || skill} value={skill._id || skill}>
+                    {typeof skill === "string" ? skill : skill.name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
             <FormControl fullWidth>
-              <InputLabel>Their Wanted Skill</InputLabel>
+              <InputLabel>Their Offered Skill (What I Want)</InputLabel>
               <Select
                 value={requestData.wantedSkill}
-                label="Their Wanted Skill"
-                onChange={e =>
+                label="Their Offered Skill (What I Want)"
+                onChange={(e) =>
                   setRequestData({
                     ...requestData,
                     wantedSkill: e.target.value,
                   })
                 }
               >
-                {targetUser?.wantedSkills?.map(skill => (
-                  <MenuItem key={skill._id} value={skill._id}>
-                    {skill.name}
+                {currentSwap.responder?.offeredSkills?.map((skill) => (
+                  <MenuItem key={skill._id || skill} value={skill._id || skill}>
+                    {typeof skill === "string" ? skill : skill.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -449,7 +498,7 @@ const SwapDetailPage = () => {
               multiline
               rows={4}
               value={requestData.message}
-              onChange={e =>
+              onChange={(e) =>
                 setRequestData({ ...requestData, message: e.target.value })
               }
               placeholder="Describe what you want to exchange and any specific requirements..."
