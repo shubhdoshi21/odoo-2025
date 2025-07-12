@@ -4,6 +4,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 // Import routes
@@ -28,16 +29,32 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+app.use(cookieParser());
+const corsOptions = {
+  origin: ["http://localhost:3000"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+  ],
+  exposedHeaders: ["Set-Cookie"],
+};
+app.use(cors(corsOptions));
+
 // CORS configuration
-app.use(
-  cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? ["https://your-frontend-domain.com"]
-        : ["http://localhost:3000", "http://localhost:3001"],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin:
+//       process.env.NODE_ENV === "production"
+//         ? ["https://your-frontend-domain.com"]
+//         : ["http://localhost:3000", "http://localhost:3001"],
+//     credentials: true,
+//   })
+// );
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));

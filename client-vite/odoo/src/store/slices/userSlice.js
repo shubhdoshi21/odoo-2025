@@ -1,9 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import userService from "../../services/userService";
 
+// Get user from localStorage
+const user = JSON.parse(localStorage.getItem("user"));
+
 const initialState = {
   users: [],
-  currentUser: null,
+  currentUser: user || null,
   topRatedUsers: [],
   pagination: {
     page: 1,
@@ -115,6 +118,9 @@ const userSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setCurrentUser: (state, action) => {
+      state.currentUser = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -190,5 +196,6 @@ const userSlice = createSlice({
   },
 });
 
-export const { clearUsers, clearCurrentUser, clearError } = userSlice.actions;
+export const { clearUsers, clearCurrentUser, clearError, setCurrentUser } =
+  userSlice.actions;
 export default userSlice.reducer;
