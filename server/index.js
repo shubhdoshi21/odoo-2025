@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
 const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
@@ -21,15 +20,9 @@ const PORT = process.env.PORT || 5001;
 // Security middleware
 app.use(helmet());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later.",
-});
-app.use(limiter);
-
 app.use(cookieParser());
+
+// CORS configuration
 const corsOptions = {
   origin: ["http://localhost:3000"],
   credentials: true,
@@ -44,17 +37,6 @@ const corsOptions = {
   exposedHeaders: ["Set-Cookie"],
 };
 app.use(cors(corsOptions));
-
-// CORS configuration
-// app.use(
-//   cors({
-//     origin:
-//       process.env.NODE_ENV === "production"
-//         ? ["https://your-frontend-domain.com"]
-//         : ["http://localhost:3000", "http://localhost:3001"],
-//     credentials: true,
-//   })
-// );
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
