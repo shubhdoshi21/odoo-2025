@@ -21,8 +21,18 @@ const authService = {
 
   // Update user profile
   updateProfile: async (profileData) => {
-    const response = await api.put("/auth/profile", profileData);
-    return response;
+    // If profileData is FormData, don't set Content-Type header
+    if (profileData instanceof FormData) {
+      const response = await api.put("/auth/profile", profileData, {
+        headers: {
+          "Content-Type": undefined, // Let browser set the correct Content-Type for FormData
+        },
+      });
+      return response;
+    } else {
+      const response = await api.put("/auth/profile", profileData);
+      return response;
+    }
   },
 
   // Change password

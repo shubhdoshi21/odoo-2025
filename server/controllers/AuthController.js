@@ -63,7 +63,11 @@ class AuthController {
   // Update user profile
   async updateProfile(req, res) {
     try {
-      const result = await AuthService.updateProfile(req.user._id, req.body);
+      const result = await AuthService.updateProfile(
+        req.user._id,
+        req.body,
+        req
+      );
 
       res.status(200).json(result);
     } catch (error) {
