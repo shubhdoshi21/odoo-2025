@@ -1,5 +1,5 @@
-import React from "react";
-import { Container, Typography, Box } from "@mui/material";
+import React from 'react';
+import { Container, Typography, Box } from '@mui/material';
 
 const SkillsPage = () => {
   return (

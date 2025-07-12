@@ -56,13 +56,21 @@ const DashboardPage = () => {
     return <LoadingSpinner />;
   }
 
+  // Ensure swaps is always an array
+  const safeSwaps = Array.isArray(swaps) ? swaps : [];
+
+  // Ensure feedback is always an array
+  const safeFeedback = Array.isArray(feedback) ? feedback : [];
+
   // Calculate stats
-  const totalSwaps = swaps.length;
-  const pendingSwaps = swaps.filter((swap) => swap.status === "pending").length;
-  const completedSwaps = swaps.filter(
+  const totalSwaps = safeSwaps.length;
+  const pendingSwaps = safeSwaps.filter(
+    (swap) => swap.status === "pending"
+  ).length;
+  const completedSwaps = safeSwaps.filter(
     (swap) => swap.status === "completed"
   ).length;
-  const cancelledSwaps = swaps.filter(
+  const cancelledSwaps = safeSwaps.filter(
     (swap) => swap.status === "cancelled"
   ).length;
 
@@ -268,9 +276,9 @@ const DashboardPage = () => {
               <Typography variant="h6" gutterBottom>
                 Recent Swaps
               </Typography>
-              {swaps.length > 0 ? (
+              {safeSwaps.length > 0 ? (
                 <List>
-                  {swaps.slice(0, 5).map((swap, index) => (
+                  {safeSwaps.slice(0, 5).map((swap, index) => (
                     <React.Fragment key={swap._id}>
                       <ListItem>
                         <ListItemAvatar>
@@ -288,7 +296,7 @@ const DashboardPage = () => {
                           size="small"
                         />
                       </ListItem>
-                      {index < swaps.length - 1 && <Divider />}
+                      {index < safeSwaps.length - 1 && <Divider />}
                     </React.Fragment>
                   ))}
                 </List>
@@ -323,9 +331,9 @@ const DashboardPage = () => {
               <Typography variant="h6" gutterBottom>
                 Recent Feedback
               </Typography>
-              {feedback.length > 0 ? (
+              {safeFeedback.length > 0 ? (
                 <List>
-                  {feedback.slice(0, 5).map((item, index) => (
+                  {safeFeedback.slice(0, 5).map((item, index) => (
                     <React.Fragment key={item._id}>
                       <ListItem>
                         <ListItemAvatar>
@@ -343,7 +351,7 @@ const DashboardPage = () => {
                           {new Date(item.createdAt).toLocaleDateString()}
                         </Typography>
                       </ListItem>
-                      {index < feedback.length - 1 && <Divider />}
+                      {index < safeFeedback.length - 1 && <Divider />}
                     </React.Fragment>
                   ))}
                 </List>
