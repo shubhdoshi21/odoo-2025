@@ -3,14 +3,7 @@ import swapService from "../../services/swapService";
 
 const initialState = {
   swaps: [],
-  pendingSwaps: [],
   currentSwap: null,
-  pagination: {
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0,
-  },
   isLoading: false,
   error: null,
 };
@@ -24,9 +17,7 @@ export const getUserSwaps = createAsyncThunk(
       return response.data;
     } catch (error) {
       const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch swaps";
+        error.response?.data?.message || error.message || "Failed to get swaps";
       return thunkAPI.rejectWithValue(message);
     }
   }
@@ -42,7 +33,7 @@ export const getPendingSwaps = createAsyncThunk(
       const message =
         error.response?.data?.message ||
         error.message ||
-        "Failed to fetch pending swaps";
+        "Failed to get pending swaps";
       return thunkAPI.rejectWithValue(message);
     }
   }
@@ -56,9 +47,7 @@ export const getSwapById = createAsyncThunk(
       return response.data;
     } catch (error) {
       const message =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch swap";
+        error.response?.data?.message || error.message || "Failed to get swap";
       return thunkAPI.rejectWithValue(message);
     }
   }
@@ -180,23 +169,11 @@ const swapSlice = createSlice({
   name: "swaps",
   initialState,
   reducers: {
-    clearSwaps: (state) => {
-      state.swaps = [];
-      state.pagination = {
-        page: 1,
-        limit: 10,
-        total: 0,
-        pages: 0,
-      };
-    },
-    clearPendingSwaps: (state) => {
-      state.pendingSwaps = [];
+    clearError: (state) => {
+      state.error = null;
     },
     clearCurrentSwap: (state) => {
       state.currentSwap = null;
-    },
-    clearError: (state) => {
-      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -208,8 +185,7 @@ const swapSlice = createSlice({
       })
       .addCase(getUserSwaps.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.swaps = action.payload.swaps;
-        state.pagination = action.payload.pagination;
+        state.swaps = action.payload.data.swaps || [];
       })
       .addCase(getUserSwaps.rejected, (state, action) => {
         state.isLoading = false;
@@ -222,7 +198,7 @@ const swapSlice = createSlice({
       })
       .addCase(getPendingSwaps.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.pendingSwaps = action.payload.swaps;
+        state.swaps = action.payload.data.swaps || [];
       })
       .addCase(getPendingSwaps.rejected, (state, action) => {
         state.isLoading = false;
@@ -235,7 +211,7 @@ const swapSlice = createSlice({
       })
       .addCase(getSwapById.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.currentSwap = action.payload.swap;
+        state.currentSwap = action.payload.data.swap;
       })
       .addCase(getSwapById.rejected, (state, action) => {
         state.isLoading = false;
@@ -248,7 +224,7 @@ const swapSlice = createSlice({
       })
       .addCase(createSwap.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.swaps.unshift(action.payload.swap);
+        state.swaps.unshift(action.payload.data.swap);
       })
       .addCase(createSwap.rejected, (state, action) => {
         state.isLoading = false;
@@ -261,17 +237,15 @@ const swapSlice = createSlice({
       })
       .addCase(updateSwap.fulfilled, (state, action) => {
         state.isLoading = false;
+        const updatedSwap = action.payload.data.swap;
         const index = state.swaps.findIndex(
-          (swap) => swap._id === action.payload.swap._id
+          (swap) => swap._id === updatedSwap._id
         );
         if (index !== -1) {
-          state.swaps[index] = action.payload.swap;
+          state.swaps[index] = updatedSwap;
         }
-        if (
-          state.currentSwap &&
-          state.currentSwap._id === action.payload.swap._id
-        ) {
-          state.currentSwap = action.payload.swap;
+        if (state.currentSwap && state.currentSwap._id === updatedSwap._id) {
+          state.currentSwap = updatedSwap;
         }
       })
       .addCase(updateSwap.rejected, (state, action) => {
@@ -285,16 +259,16 @@ const swapSlice = createSlice({
       })
       .addCase(acceptSwap.fulfilled, (state, action) => {
         state.isLoading = false;
+        const updatedSwap = action.payload.data.swap;
         const index = state.swaps.findIndex(
-          (swap) => swap._id === action.payload.swap._id
+          (swap) => swap._id === updatedSwap._id
         );
         if (index !== -1) {
-          state.swaps[index] = action.payload.swap;
+          state.swaps[index] = updatedSwap;
         }
-        // Remove from pending swaps
-        state.pendingSwaps = state.pendingSwaps.filter(
-          (swap) => swap._id !== action.payload.swap._id
-        );
+        if (state.currentSwap && state.currentSwap._id === updatedSwap._id) {
+          state.currentSwap = updatedSwap;
+        }
       })
       .addCase(acceptSwap.rejected, (state, action) => {
         state.isLoading = false;
@@ -307,16 +281,16 @@ const swapSlice = createSlice({
       })
       .addCase(rejectSwap.fulfilled, (state, action) => {
         state.isLoading = false;
+        const updatedSwap = action.payload.data.swap;
         const index = state.swaps.findIndex(
-          (swap) => swap._id === action.payload.swap._id
+          (swap) => swap._id === updatedSwap._id
         );
         if (index !== -1) {
-          state.swaps[index] = action.payload.swap;
+          state.swaps[index] = updatedSwap;
         }
-        // Remove from pending swaps
-        state.pendingSwaps = state.pendingSwaps.filter(
-          (swap) => swap._id !== action.payload.swap._id
-        );
+        if (state.currentSwap && state.currentSwap._id === updatedSwap._id) {
+          state.currentSwap = updatedSwap;
+        }
       })
       .addCase(rejectSwap.rejected, (state, action) => {
         state.isLoading = false;
@@ -329,17 +303,15 @@ const swapSlice = createSlice({
       })
       .addCase(cancelSwap.fulfilled, (state, action) => {
         state.isLoading = false;
+        const updatedSwap = action.payload.data.swap;
         const index = state.swaps.findIndex(
-          (swap) => swap._id === action.payload.swap._id
+          (swap) => swap._id === updatedSwap._id
         );
         if (index !== -1) {
-          state.swaps[index] = action.payload.swap;
+          state.swaps[index] = updatedSwap;
         }
-        if (
-          state.currentSwap &&
-          state.currentSwap._id === action.payload.swap._id
-        ) {
-          state.currentSwap = action.payload.swap;
+        if (state.currentSwap && state.currentSwap._id === updatedSwap._id) {
+          state.currentSwap = updatedSwap;
         }
       })
       .addCase(cancelSwap.rejected, (state, action) => {
@@ -353,17 +325,15 @@ const swapSlice = createSlice({
       })
       .addCase(completeSwap.fulfilled, (state, action) => {
         state.isLoading = false;
+        const updatedSwap = action.payload.data.swap;
         const index = state.swaps.findIndex(
-          (swap) => swap._id === action.payload.swap._id
+          (swap) => swap._id === updatedSwap._id
         );
         if (index !== -1) {
-          state.swaps[index] = action.payload.swap;
+          state.swaps[index] = updatedSwap;
         }
-        if (
-          state.currentSwap &&
-          state.currentSwap._id === action.payload.swap._id
-        ) {
-          state.currentSwap = action.payload.swap;
+        if (state.currentSwap && state.currentSwap._id === updatedSwap._id) {
+          state.currentSwap = updatedSwap;
         }
       })
       .addCase(completeSwap.rejected, (state, action) => {
@@ -377,16 +347,9 @@ const swapSlice = createSlice({
       })
       .addCase(deleteSwap.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.swaps = state.swaps.filter(
-          (swap) => swap._id !== action.payload.swap._id
-        );
-        state.pendingSwaps = state.pendingSwaps.filter(
-          (swap) => swap._id !== action.payload.swap._id
-        );
-        if (
-          state.currentSwap &&
-          state.currentSwap._id === action.payload.swap._id
-        ) {
+        const deletedSwapId = action.payload.data.swap._id;
+        state.swaps = state.swaps.filter((swap) => swap._id !== deletedSwapId);
+        if (state.currentSwap && state.currentSwap._id === deletedSwapId) {
           state.currentSwap = null;
         }
       })
@@ -397,6 +360,5 @@ const swapSlice = createSlice({
   },
 });
 
-export const { clearSwaps, clearPendingSwaps, clearCurrentSwap, clearError } =
-  swapSlice.actions;
+export const { clearError, clearCurrentSwap } = swapSlice.actions;
 export default swapSlice.reducer;

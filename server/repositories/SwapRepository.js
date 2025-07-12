@@ -17,19 +17,13 @@ class SwapRepository {
   static async findById(swapId, userId = null) {
     try {
       let query = Swap.findById(swapId)
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       if (userId) {
-        query = query.or([{ requesterId: userId }, { providerId: userId }]);
+        query = query.or([{ requester: userId }, { responder: userId }]);
       }
 
       return await query.exec();
@@ -50,18 +44,12 @@ class SwapRepository {
       } = options;
 
       const query = Swap.find({
-        $or: [{ requesterId: userId }, { providerId: userId }],
+        $or: [{ requester: userId }, { responder: userId }],
       })
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       if (status) {
         query.where("status", status);
@@ -77,7 +65,7 @@ class SwapRepository {
       const [swaps, total] = await Promise.all([
         query.exec(),
         Swap.countDocuments({
-          $or: [{ requesterId: userId }, { providerId: userId }],
+          $or: [{ requester: userId }, { responder: userId }],
           ...(status && { status }),
         }),
       ]);
@@ -102,15 +90,12 @@ class SwapRepository {
   static async getPendingSwaps(userId) {
     try {
       return await Swap.find({
-        providerId: userId,
+        responder: userId,
         status: "pending",
       })
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description")
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description")
         .sort({ createdAt: -1 })
         .exec();
     } catch (error) {
@@ -124,21 +109,15 @@ class SwapRepository {
       const swap = await Swap.findOneAndUpdate(
         {
           _id: swapId,
-          $or: [{ requesterId: userId }, { providerId: userId }],
+          $or: [{ requester: userId }, { responder: userId }],
         },
         updateData,
         { new: true, runValidators: true }
       )
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       return swap;
     } catch (error) {
@@ -152,7 +131,7 @@ class SwapRepository {
       const swap = await Swap.findOneAndUpdate(
         {
           _id: swapId,
-          providerId: userId,
+          responder: userId,
           status: "pending",
         },
         {
@@ -161,16 +140,10 @@ class SwapRepository {
         },
         { new: true, runValidators: true }
       )
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       return swap;
     } catch (error) {
@@ -184,7 +157,7 @@ class SwapRepository {
       const swap = await Swap.findOneAndUpdate(
         {
           _id: swapId,
-          providerId: userId,
+          responder: userId,
           status: "pending",
         },
         {
@@ -194,16 +167,10 @@ class SwapRepository {
         },
         { new: true, runValidators: true }
       )
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       return swap;
     } catch (error) {
@@ -217,7 +184,7 @@ class SwapRepository {
       const swap = await Swap.findOneAndUpdate(
         {
           _id: swapId,
-          $or: [{ requesterId: userId }, { providerId: userId }],
+          $or: [{ requester: userId }, { responder: userId }],
           status: { $in: ["pending", "accepted"] },
         },
         {
@@ -227,16 +194,10 @@ class SwapRepository {
         },
         { new: true, runValidators: true }
       )
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       return swap;
     } catch (error) {
@@ -250,7 +211,7 @@ class SwapRepository {
       const swap = await Swap.findOneAndUpdate(
         {
           _id: swapId,
-          $or: [{ requesterId: userId }, { providerId: userId }],
+          $or: [{ requester: userId }, { responder: userId }],
           status: "accepted",
         },
         {
@@ -259,16 +220,10 @@ class SwapRepository {
         },
         { new: true, runValidators: true }
       )
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       return swap;
     } catch (error) {
@@ -281,19 +236,13 @@ class SwapRepository {
     try {
       const swap = await Swap.findOneAndDelete({
         _id: swapId,
-        requesterId: userId,
+        requester: userId,
         status: "pending",
       })
-        .populate(
-          "requesterId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate(
-          "providerId",
-          "username firstName lastName email profilePicture rating"
-        )
-        .populate("requestedSkillId", "name category description")
-        .populate("offeredSkillId", "name category description");
+        .populate("requester", "name email profilePhoto averageRating")
+        .populate("responder", "name email profilePhoto averageRating")
+        .populate("requestedSkill", "name category description")
+        .populate("offeredSkill", "name category description");
 
       return swap;
     } catch (error) {
@@ -307,7 +256,7 @@ class SwapRepository {
       const stats = await Swap.aggregate([
         {
           $match: {
-            $or: [{ requesterId: userId }, { providerId: userId }],
+            $or: [{ requester: userId }, { responder: userId }],
           },
         },
         {
@@ -319,16 +268,16 @@ class SwapRepository {
       ]);
 
       const totalSwaps = await Swap.countDocuments({
-        $or: [{ requesterId: userId }, { providerId: userId }],
+        $or: [{ requester: userId }, { responder: userId }],
       });
 
       const completedSwaps = await Swap.countDocuments({
-        $or: [{ requesterId: userId }, { providerId: userId }],
+        $or: [{ requester: userId }, { responder: userId }],
         status: "completed",
       });
 
       const pendingSwaps = await Swap.countDocuments({
-        providerId: userId,
+        responder: userId,
         status: "pending",
       });
 
@@ -360,10 +309,10 @@ class SwapRepository {
       } = options;
 
       const query = Swap.find()
-        .populate("requesterId", "username firstName lastName email")
-        .populate("providerId", "username firstName lastName email")
-        .populate("requestedSkillId", "name category")
-        .populate("offeredSkillId", "name category");
+        .populate("requester", "name email profilePhoto")
+        .populate("responder", "name email profilePhoto")
+        .populate("requestedSkill", "name category")
+        .populate("offeredSkill", "name category");
 
       if (status) {
         query.where("status", status);
@@ -398,18 +347,18 @@ class SwapRepository {
   }
 
   // Check if user can create swap with another user
-  static async canCreateSwap(requesterId, providerId) {
+  static async canCreateSwap(requesterId, responderId) {
     try {
       const existingSwap = await Swap.findOne({
         $or: [
           {
-            requesterId,
-            providerId,
+            requester: requesterId,
+            responder: responderId,
             status: { $in: ["pending", "accepted"] },
           },
           {
-            requesterId: providerId,
-            providerId: requesterId,
+            requester: responderId,
+            responder: requesterId,
             status: { $in: ["pending", "accepted"] },
           },
         ],
