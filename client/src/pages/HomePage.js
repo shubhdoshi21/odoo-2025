@@ -26,6 +26,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { getTopRatedUsers } from "../store/slices/userSlice";
 import { getPopularSkills } from "../store/slices/skillSlice";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import UsersShowcase from "../components/home/UsersShowcase";
+
 
 const HomePage = () => {
   const theme = useTheme();
@@ -201,9 +203,10 @@ const HomePage = () => {
           ))}
         </Grid>
       </Container>
-
+{/* After Features Section */}
+<UsersShowcase />
       {/* Popular Skills Section */}
-      <Box sx={{ bgcolor: "grey.50", py: 8 }}>
+      {/*<Box sx={{ bgcolor: "grey.50", py: 8 }}>
         <Container maxWidth="lg">
           <Typography
             variant="h3"
@@ -267,7 +270,7 @@ const HomePage = () => {
             </Button>
           </Box>
         </Container>
-      </Box>
+      </Box>*/}
 
       {/* Top Users Section */}
       <Container maxWidth="lg" sx={{ py: 8 }}>
