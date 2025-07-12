@@ -38,6 +38,22 @@ const swapSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
     },
+    rejectedAt: {
+      type: Date,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Rejection reason cannot exceed 500 characters"],
+    },
+    cancelledAt: {
+      type: Date,
+    },
+    cancellationReason: {
+      type: String,
+      trim: true,
+      maxlength: [500, "Cancellation reason cannot exceed 500 characters"],
+    },
     isRated: {
       type: Boolean,
       default: false,

@@ -147,7 +147,7 @@ class UserRepository {
   async search(searchCriteria, page = 1, limit = 10) {
     try {
       const skip = (page - 1) * limit;
-      const searchQuery = { isBanned: false };
+      const searchQuery = { isBanned: false, isPublic: true, };
 
       // Build search conditions for name and location (text search)
       const textConditions = [];

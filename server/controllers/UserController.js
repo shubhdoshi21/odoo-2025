@@ -11,7 +11,7 @@ class UserController {
         availability,
         isPublic,
       } = req.query;
-      const filters = {};
+      const filters = { isPublic: true }; // Always show only public profiles
 
       if (location) filters.location = location;
       if (availability)

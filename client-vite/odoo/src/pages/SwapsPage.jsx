@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -27,7 +26,7 @@ import {
   IconButton,
   Tooltip,
   Badge,
-} from '@mui/material';
+} from "@mui/material";
 import {
   SwapHoriz,
   CheckCircle,
@@ -40,29 +39,30 @@ import {
   FilterList,
   Refresh,
   Visibility,
-} from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
   getUserSwaps,
   acceptSwap,
   rejectSwap,
+  cancelSwap,
   clearError,
-} from '../store/slices/swapSlice';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+} from "../store/slices/swapSlice";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const SwapsPage = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { swaps = [], isLoading, error } = useSelector(state => state.swaps);
-  const { user: currentUser } = useSelector(state => state.auth);
+  const { swaps = [], isLoading, error } = useSelector((state) => state.swaps);
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [activeTab, setActiveTab] = useState(0);
   const [selectedSwap, setSelectedSwap] = useState(null);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     dispatch(getUserSwaps());
@@ -73,84 +73,91 @@ const SwapsPage = () => {
 
   // Debug: Log swaps data
   useEffect(() => {
-    console.log('Swaps data:', swaps);
-    console.log('Current user:', currentUser);
+    console.log("Swaps data:", swaps);
+    console.log("Current user:", currentUser);
+    if (swaps && swaps.length > 0) {
+      console.log("First swap structure:", swaps[0]);
+      console.log("First swap requester:", swaps[0].requester);
+      console.log("First swap responder:", swaps[0].responder);
+      console.log("First swap offeredSkill:", swaps[0].offeredSkill);
+      console.log("First swap requestedSkill:", swaps[0].requestedSkill);
+    }
   }, [swaps, currentUser]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const handleAcceptSwap = async swapId => {
+  const handleAcceptSwap = async (swapId) => {
     try {
       await dispatch(acceptSwap(swapId)).unwrap();
       // Refresh the swaps list
       dispatch(getUserSwaps());
     } catch (error) {
-      console.error('Failed to accept swap:', error);
+      console.error("Failed to accept swap:", error);
     }
   };
 
-  const handleRejectSwap = async swapId => {
+  const handleRejectSwap = async (swapId) => {
     try {
-      await dispatch(rejectSwap(swapId)).unwrap();
+      await dispatch(rejectSwap({ swapId, reason: rejectReason })).unwrap();
       setShowRejectDialog(false);
-      setRejectReason('');
+      setRejectReason("");
       setSelectedSwap(null);
       // Refresh the swaps list
       dispatch(getUserSwaps());
     } catch (error) {
-      console.error('Failed to reject swap:', error);
+      console.error("Failed to reject swap:", error);
     }
   };
 
-  const openRejectDialog = swap => {
+  const openRejectDialog = (swap) => {
     setSelectedSwap(swap);
     setShowRejectDialog(true);
   };
 
   const closeRejectDialog = () => {
     setShowRejectDialog(false);
-    setRejectReason('');
+    setRejectReason("");
     setSelectedSwap(null);
   };
 
-  const getStatusColor = status => {
+  const getStatusColor = (status) => {
     switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'accepted':
-        return 'info';
-      case 'completed':
-        return 'success';
-      case 'rejected':
-      case 'cancelled':
-        return 'error';
+      case "pending":
+        return "warning";
+      case "accepted":
+        return "info";
+      case "completed":
+        return "success";
+      case "rejected":
+      case "cancelled":
+        return "error";
       default:
-        return 'default';
+        return "default";
     }
   };
 
-  const getStatusIcon = status => {
+  const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return <Schedule />;
-      case 'accepted':
+      case "accepted":
         return <CheckCircle />;
-      case 'completed':
+      case "completed":
         return <CheckCircle />;
-      case 'rejected':
-      case 'cancelled':
+      case "rejected":
+      case "cancelled":
         return <Cancel />;
       default:
         return <SwapHoriz />;
     }
   };
 
-  const filterSwapsByStatus = status => {
+  const filterSwapsByStatus = (status) => {
     if (!swaps || !Array.isArray(swaps)) return [];
-    if (status === 'all') return swaps;
-    return swaps.filter(swap => swap.status === status);
+    if (status === "all") return swaps;
+    return swaps.filter((swap) => swap.status === status);
   };
 
   const getFilteredSwaps = () => {
@@ -160,36 +167,36 @@ const SwapsPage = () => {
       case 0: // All
         return swaps;
       case 1: // Pending
-        return filterSwapsByStatus('pending');
+        return filterSwapsByStatus("pending");
       case 2: // Accepted
-        return filterSwapsByStatus('accepted');
+        return filterSwapsByStatus("accepted");
       case 3: // Completed
-        return filterSwapsByStatus('completed');
+        return filterSwapsByStatus("completed");
       case 4: // Rejected/Cancelled
-        return swaps.filter(swap =>
-          ['rejected', 'cancelled'].includes(swap.status),
+        return swaps.filter((swap) =>
+          ["rejected", "cancelled"].includes(swap.status)
         );
       default:
         return swaps;
     }
   };
 
-  const canUserActOnSwap = swap => {
+  const canUserActOnSwap = (swap) => {
     // User can only act on swaps where they are the responder and status is pending
     return (
-      swap.responder?._id === currentUser?._id && swap.status === 'pending'
+      swap.responder?._id === currentUser?._id && swap.status === "pending"
     );
   };
 
-  const isUserInitiator = swap => {
+  const isUserInitiator = (swap) => {
     return swap.requester?._id === currentUser?._id;
   };
 
-  const formatDate = dateString => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -223,7 +230,7 @@ const SwapsPage = () => {
       )}
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
           value={activeTab}
           onChange={handleTabChange}
@@ -239,7 +246,7 @@ const SwapsPage = () => {
           <Tab
             label={
               <Badge
-                badgeContent={filterSwapsByStatus('pending')?.length || 0}
+                badgeContent={filterSwapsByStatus("pending")?.length || 0}
                 color="warning"
               >
                 Pending
@@ -249,7 +256,7 @@ const SwapsPage = () => {
           <Tab
             label={
               <Badge
-                badgeContent={filterSwapsByStatus('accepted')?.length || 0}
+                badgeContent={filterSwapsByStatus("accepted")?.length || 0}
                 color="info"
               >
                 Accepted
@@ -259,7 +266,7 @@ const SwapsPage = () => {
           <Tab
             label={
               <Badge
-                badgeContent={filterSwapsByStatus('completed')?.length || 0}
+                badgeContent={filterSwapsByStatus("completed")?.length || 0}
                 color="success"
               >
                 Completed
@@ -270,8 +277,8 @@ const SwapsPage = () => {
             label={
               <Badge
                 badgeContent={
-                  swaps?.filter(swap =>
-                    ['rejected', 'cancelled'].includes(swap.status),
+                  swaps?.filter((swap) =>
+                    ["rejected", "cancelled"].includes(swap.status)
                   )?.length || 0
                 }
                 color="error"
@@ -285,8 +292,8 @@ const SwapsPage = () => {
 
       {/* Swaps Grid */}
       {filteredSwaps.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <SwapHoriz sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+        <Box sx={{ textAlign: "center", py: 8 }}>
+          <SwapHoriz sx={{ fontSize: 64, color: "text.secondary", mb: 2 }} />
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No swaps found
           </Typography>
@@ -295,35 +302,35 @@ const SwapsPage = () => {
               ? "You haven't made or received any swap requests yet."
               : `No ${
                   [
-                    'all',
-                    'pending',
-                    'accepted',
-                    'completed',
-                    'rejected/cancelled',
+                    "all",
+                    "pending",
+                    "accepted",
+                    "completed",
+                    "rejected/cancelled",
                   ][activeTab]
                 } swaps found.`}
           </Typography>
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {filteredSwaps.map(swap => (
+          {filteredSwaps.map((swap) => (
             <Grid item xs={12} md={6} lg={4} key={swap._id}>
               <Card
                 sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  '&:hover': {
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                  "&:hover": {
                     boxShadow: theme.shadows[8],
-                    transform: 'translateY(-2px)',
-                    transition: 'all 0.2s ease-in-out',
+                    transform: "translateY(-2px)",
+                    transition: "all 0.2s ease-in-out",
                   },
                 }}
               >
                 {/* Status Badge */}
                 <Box
-                  sx={{ position: 'absolute', top: 16, right: 16, zIndex: 1 }}
+                  sx={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
                 >
                   <Chip
                     icon={getStatusIcon(swap.status)}
@@ -342,128 +349,144 @@ const SwapsPage = () => {
                     gutterBottom
                     sx={{ fontWeight: 600 }}
                   >
-                    {swap.title || 'Skill Swap Request'}
+                    Skill Swap Request
                   </Typography>
 
                   {/* Skills Exchange */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <School color="primary" fontSize="small" />
+                  <Box sx={{ mb: 2 }}>
                     <Typography
                       variant="body2"
-                      color="primary"
-                      sx={{ fontWeight: 500 }}
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
                     >
-                      {swap.offeredSkill?.name || 'Unknown Skill'}
+                      <strong>Skills Exchange:</strong>
                     </Typography>
-                    <SwapHoriz color="action" fontSize="small" />
-                    <School color="primary" fontSize="small" />
-                    <Typography
-                      variant="body2"
-                      color="primary"
-                      sx={{ fontWeight: 500 }}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        flexWrap: "wrap",
+                      }}
                     >
-                      {swap.requestedSkill?.name || 'Unknown Skill'}
-                    </Typography>
+                      <Chip
+                        icon={<School />}
+                        label={
+                          swap.offeredSkill?.name ||
+                          `Skill ${
+                            swap.offeredSkill?._id?.slice(-6) || "Unknown"
+                          }`
+                        }
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                      <SwapHoriz color="action" fontSize="small" />
+                      <Chip
+                        icon={<School />}
+                        label={
+                          swap.requestedSkill?.name ||
+                          `Skill ${
+                            swap.requestedSkill?._id?.slice(-6) || "Unknown"
+                          }`
+                        }
+                        size="small"
+                        color="secondary"
+                        variant="outlined"
+                      />
+                    </Box>
                   </Box>
 
-                  {/* Description */}
-                  {swap.description && (
+                  {/* Message */}
+                  {swap.message && (
                     <Typography
                       variant="body2"
                       color="text.secondary"
                       sx={{ mb: 2 }}
                     >
-                      {swap.description.length > 100
-                        ? `${swap.description.substring(0, 100)}...`
-                        : swap.description}
+                      {swap.message.length > 100
+                        ? `${swap.message.substring(0, 100)}...`
+                        : swap.message}
                     </Typography>
                   )}
 
                   {/* Swap Details */}
                   <Box sx={{ mb: 2 }}>
-                    {swap.duration && (
+                    {swap.scheduledDate && (
                       <Box
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
+                          display: "flex",
+                          alignItems: "center",
                           gap: 1,
                           mb: 1,
                         }}
                       >
                         <AccessTime fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
-                          {swap.duration}
+                          Scheduled: {formatDate(swap.scheduledDate)}
                         </Typography>
                       </Box>
                     )}
-                    {swap.location && (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          mb: 1,
-                        }}
-                      >
-                        <LocationOn fontSize="small" color="action" />
-                        <Typography variant="body2" color="text.secondary">
-                          {swap.location}
-                        </Typography>
-                      </Box>
-                    )}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Person fontSize="small" color="action" />
                       <Typography variant="body2" color="text.secondary">
                         {isUserInitiator(swap)
-                          ? 'You initiated'
-                          : 'Requested from you'}
+                          ? "You initiated"
+                          : "Requested from you"}
                       </Typography>
                     </Box>
                   </Box>
 
-                  {/* User Info */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      mb: 2,
-                    }}
-                  >
-                    <Avatar
-                      src={
-                        isUserInitiator(swap)
-                          ? swap.responder?.profilePhoto
-                          : swap.requester?.profilePhoto
-                      }
-                      alt={
-                        isUserInitiator(swap)
-                          ? swap.responder?.name
-                          : swap.requester?.name
-                      }
-                      sx={{ width: 40, height: 40 }}
+                  {/* Swap Participants */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
                     >
-                      {isUserInitiator(swap)
-                        ? swap.responder?.name?.[0]
-                        : swap.requester?.name?.[0]}
-                    </Avatar>
-                    <Box>
+                      <strong>Swap Participants:</strong>
+                    </Typography>
+
+                    {/* Requester */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <Avatar
+                        src={swap.requester?.profilePhotoUrl}
+                        alt={swap.requester?.name || "Requester"}
+                        sx={{ width: 24, height: 24, fontSize: "0.75rem" }}
+                      >
+                        {swap.requester?.name?.[0] || "R"}
+                      </Avatar>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {isUserInitiator(swap)
-                          ? swap.responder?.name
-                          : swap.requester?.name}
+                        {swap.requester?.name ||
+                          `User ${swap.requester?._id?.slice(-6) || "Unknown"}`}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {isUserInitiator(swap)
-                          ? swap.responder?.email
-                          : swap.requester?.email}
+                        (Requester)
+                      </Typography>
+                    </Box>
+
+                    {/* Responder */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Avatar
+                        src={swap.responder?.profilePhotoUrl}
+                        alt={swap.responder?.name || "Responder"}
+                        sx={{ width: 24, height: 24, fontSize: "0.75rem" }}
+                      >
+                        {swap.responder?.name?.[0] || "R"}
+                      </Avatar>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {swap.responder?.name ||
+                          `User ${swap.responder?._id?.slice(-6) || "Unknown"}`}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        (Responder)
                       </Typography>
                     </Box>
                   </Box>
@@ -480,7 +503,7 @@ const SwapsPage = () => {
                   </Typography>
 
                   {/* Action Buttons */}
-                  <Box sx={{ display: 'flex', gap: 1, mt: 'auto' }}>
+                  <Box sx={{ display: "flex", gap: 1, mt: "auto" }}>
                     <Tooltip title="View Details">
                       <IconButton
                         size="small"
@@ -515,13 +538,16 @@ const SwapsPage = () => {
                       </>
                     )}
 
-                    {isUserInitiator(swap) && swap.status === 'pending' && (
+                    {isUserInitiator(swap) && swap.status === "pending" && (
                       <Button
                         variant="outlined"
                         color="error"
                         size="small"
                         startIcon={<Cancel />}
-                        onClick={() => openRejectDialog(swap)}
+                        onClick={() => {
+                          setSelectedSwap(swap);
+                          setShowRejectDialog(true);
+                        }}
                         sx={{ flexGrow: 1 }}
                       >
                         Cancel
@@ -544,14 +570,14 @@ const SwapsPage = () => {
       >
         <DialogTitle>
           {selectedSwap && isUserInitiator(selectedSwap)
-            ? 'Cancel Swap'
-            : 'Reject Swap Request'}
+            ? "Cancel Swap"
+            : "Reject Swap Request"}
         </DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {selectedSwap && isUserInitiator(selectedSwap)
-              ? 'Are you sure you want to cancel this swap request?'
-              : 'Are you sure you want to reject this swap request?'}
+              ? "Are you sure you want to cancel this swap request?"
+              : "Are you sure you want to reject this swap request?"}
           </Typography>
           <TextField
             fullWidth
@@ -559,20 +585,38 @@ const SwapsPage = () => {
             rows={3}
             label="Reason (optional)"
             value={rejectReason}
-            onChange={e => setRejectReason(e.target.value)}
+            onChange={(e) => setRejectReason(e.target.value)}
             placeholder="Provide a reason for rejecting this request..."
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={closeRejectDialog}>Cancel</Button>
           <Button
-            onClick={() => handleRejectSwap(selectedSwap._id)}
+            onClick={() => {
+              if (selectedSwap && isUserInitiator(selectedSwap)) {
+                // Cancel swap
+                dispatch(
+                  cancelSwap({ swapId: selectedSwap._id, reason: rejectReason })
+                )
+                  .unwrap()
+                  .then(() => {
+                    closeRejectDialog();
+                    dispatch(getUserSwaps());
+                  })
+                  .catch((error) => {
+                    console.error("Failed to cancel swap:", error);
+                  });
+              } else {
+                // Reject swap
+                handleRejectSwap(selectedSwap._id);
+              }
+            }}
             color="error"
             variant="contained"
           >
             {selectedSwap && isUserInitiator(selectedSwap)
-              ? 'Cancel Swap'
-              : 'Reject Request'}
+              ? "Cancel Swap"
+              : "Reject Request"}
           </Button>
         </DialogActions>
       </Dialog>

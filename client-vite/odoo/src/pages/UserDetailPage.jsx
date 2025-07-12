@@ -157,9 +157,6 @@ const UserDetailPage = () => {
                 <Typography variant="h4" gutterBottom>
                   {currentUser.name}
                 </Typography>
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  @{currentUser.username}
-                </Typography>
                 {currentUser.location && (
                   <Box
                     sx={{

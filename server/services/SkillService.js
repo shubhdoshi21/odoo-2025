@@ -14,23 +14,37 @@ class SkillService {
         sortOrder = "asc",
       } = options;
 
-      const filters = {};
-      if (category) {
-        filters.category = category;
-      }
-      if (search) {
-        filters.$text = { $search: search };
-      }
-
-      const result = await SkillRepository.getAllSkills({
+      // Use getSkillsWithUserCount to get actual user counts
+      const result = await SkillRepository.getSkillsWithUserCount({
         page,
         limit,
-        filters,
         sortBy,
         sortOrder,
       });
 
-      return result;
+      // Apply additional filters if needed
+      let filteredSkills = result.skills;
+
+      if (category) {
+        filteredSkills = filteredSkills.filter(
+          (skill) => skill.category === category
+        );
+      }
+
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filteredSkills = filteredSkills.filter(
+          (skill) =>
+            skill.name.toLowerCase().includes(searchLower) ||
+            (skill.description &&
+              skill.description.toLowerCase().includes(searchLower))
+        );
+      }
+
+      return {
+        skills: filteredSkills,
+        pagination: result.pagination,
+      };
     } catch (error) {
       throw new Error(`Error getting all skills: ${error.message}`);
     }
@@ -84,7 +98,7 @@ class SkillService {
         throw new Error("Skill ID is required");
       }
 
-      const skill = await SkillRepository.findById(skillId);
+      const skill = await SkillRepository.findByIdWithUserCount(skillId);
       return skill;
     } catch (error) {
       throw new Error(`Error getting skill by ID: ${error.message}`);

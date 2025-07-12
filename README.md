@@ -1,3 +1,6 @@
+## Contributors
+Megh Prajapati, Shubh Doshi, Riddhi Thakkar
+
 # Skill Swap Platform
 
 A full-stack MERN (MongoDB, Express.js, React.js, Node.js) application that enables users to exchange skills with each other. Users can offer skills they have and request skills they want to learn, creating a community-driven learning platform.

@@ -204,15 +204,10 @@ class SwapService {
         throw new Error("User ID is required");
       }
 
-      if (!reason || reason.trim().length === 0) {
-        throw new Error("Rejection reason is required");
-      }
+      // Reason is optional, use empty string if not provided
+      const finalReason = reason ? reason.trim() : "";
 
-      const swap = await SwapRepository.rejectSwap(
-        swapId,
-        userId,
-        reason.trim()
-      );
+      const swap = await SwapRepository.rejectSwap(swapId, userId, finalReason);
       if (!swap) {
         throw new Error("Swap not found or cannot be rejected");
       }
@@ -234,15 +229,10 @@ class SwapService {
         throw new Error("User ID is required");
       }
 
-      if (!reason || reason.trim().length === 0) {
-        throw new Error("Cancellation reason is required");
-      }
+      // Reason is optional, use empty string if not provided
+      const finalReason = reason ? reason.trim() : "";
 
-      const swap = await SwapRepository.cancelSwap(
-        swapId,
-        userId,
-        reason.trim()
-      );
+      const swap = await SwapRepository.cancelSwap(swapId, userId, finalReason);
       if (!swap) {
         throw new Error("Swap not found or cannot be cancelled");
       }
