@@ -24,6 +24,7 @@ import {
   LocationOn,
   Star,
   FilterList,
+  Person,
 } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -38,43 +39,44 @@ const UsersPage = () => {
 
   const { users, pagination, isLoading } = useSelector((state) => state.users);
 
-  const [searchQuery, setSearchQuery] = useState(
-    searchParams.get("search") || ""
-  );
-  const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [location, setLocation] = useState(searchParams.get("location") || "");
-  const [rating, setRating] = useState(searchParams.get("rating") || "");
+  const [availability, setAvailability] = useState(
+    searchParams.get("availability") || ""
+  );
+
+  // Load users on component mount
+  useEffect(() => {
+    dispatch(getAllUsers({ page: 1, limit: 12 }));
+  }, [dispatch]);
 
   useEffect(() => {
     const params = {};
-    if (searchQuery) params.search = searchQuery;
-    if (category) params.category = category;
+    if (searchQuery) params.q = searchQuery;
     if (location) params.location = location;
-    if (rating) params.rating = rating;
+    if (availability) params.availability = availability;
 
     if (Object.keys(params).length > 0) {
       dispatch(searchUsers(params));
     } else {
       dispatch(getAllUsers({ page: 1, limit: 12 }));
     }
-  }, [dispatch, searchQuery, category, location, rating]);
+  }, [dispatch, searchQuery, location, availability]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (searchQuery) params.set("search", searchQuery);
-    if (category) params.set("category", category);
+    if (searchQuery) params.set("q", searchQuery);
     if (location) params.set("location", location);
-    if (rating) params.set("rating", rating);
+    if (availability) params.set("availability", availability);
     setSearchParams(params);
   };
 
   const handlePageChange = (event, value) => {
     const params = { page: value, limit: 12 };
-    if (searchQuery) params.search = searchQuery;
-    if (category) params.category = category;
+    if (searchQuery) params.q = searchQuery;
     if (location) params.location = location;
-    if (rating) params.rating = rating;
+    if (availability) params.availability = availability;
 
     if (
       Object.keys(params).filter((key) => key !== "page" && key !== "limit")
@@ -88,9 +90,8 @@ const UsersPage = () => {
 
   const clearFilters = () => {
     setSearchQuery("");
-    setCategory("");
     setLocation("");
-    setRating("");
+    setAvailability("");
     setSearchParams({});
     dispatch(getAllUsers({ page: 1, limit: 12 }));
   };
@@ -119,7 +120,7 @@ const UsersPage = () => {
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  placeholder="Search users..."
+                  placeholder="Search users by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   InputProps={{
@@ -131,27 +132,7 @@ const UsersPage = () => {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={category}
-                    label="Category"
-                    onChange={(e) => setCategory(e.target.value)}
-                  >
-                    <MenuItem value="">All Categories</MenuItem>
-                    <MenuItem value="technology">Technology</MenuItem>
-                    <MenuItem value="languages">Languages</MenuItem>
-                    <MenuItem value="music">Music</MenuItem>
-                    <MenuItem value="cooking">Cooking</MenuItem>
-                    <MenuItem value="fitness">Fitness</MenuItem>
-                    <MenuItem value="art">Art</MenuItem>
-                    <MenuItem value="business">Business</MenuItem>
-                    <MenuItem value="other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
+              <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   fullWidth
                   placeholder="Location"
@@ -166,18 +147,21 @@ const UsersPage = () => {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={2}>
+              <Grid item xs={12} sm={6} md={3}>
                 <FormControl fullWidth>
-                  <InputLabel>Min Rating</InputLabel>
+                  <InputLabel>Availability</InputLabel>
                   <Select
-                    value={rating}
-                    label="Min Rating"
-                    onChange={(e) => setRating(e.target.value)}
+                    value={availability}
+                    label="Availability"
+                    onChange={(e) => setAvailability(e.target.value)}
                   >
-                    <MenuItem value="">Any Rating</MenuItem>
-                    <MenuItem value="4">4+ Stars</MenuItem>
-                    <MenuItem value="3">3+ Stars</MenuItem>
-                    <MenuItem value="2">2+ Stars</MenuItem>
+                    <MenuItem value="">Any Availability</MenuItem>
+                    <MenuItem value="Weekdays">Weekdays</MenuItem>
+                    <MenuItem value="Weekends">Weekends</MenuItem>
+                    <MenuItem value="Evenings">Evenings</MenuItem>
+                    <MenuItem value="Mornings">Mornings</MenuItem>
+                    <MenuItem value="Afternoons">Afternoons</MenuItem>
+                    <MenuItem value="Flexible">Flexible</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -227,32 +211,15 @@ const UsersPage = () => {
                 >
                   <CardContent sx={{ flexGrow: 1, textAlign: "center" }}>
                     <Avatar
-                      src={user.profilePicture}
-                      alt={user.username}
+                      src={user.profilePhotoUrl}
+                      alt={user.name}
                       sx={{ width: 80, height: 80, mx: "auto", mb: 2 }}
-                    />
-                    <Typography variant="h6" gutterBottom>
-                      {user.firstName} {user.lastName}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
                     >
-                      @{user.username}
+                      <Person sx={{ fontSize: 40 }} />
+                    </Avatar>
+                    <Typography variant="h6" gutterBottom>
+                      {user.name}
                     </Typography>
-
-                    {user.bio && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        paragraph
-                      >
-                        {user.bio.length > 100
-                          ? `${user.bio.substring(0, 100)}...`
-                          : user.bio}
-                      </Typography>
-                    )}
 
                     <Box
                       sx={{
@@ -262,9 +229,13 @@ const UsersPage = () => {
                         mb: 2,
                       }}
                     >
-                      <Rating value={user.rating || 0} readOnly size="small" />
+                      <Rating
+                        value={user.averageRating || 0}
+                        readOnly
+                        size="small"
+                      />
                       <Typography variant="body2" sx={{ ml: 1 }}>
-                        ({user.reviewCount || 0})
+                        ({user.totalRatings || 0})
                       </Typography>
                     </Box>
 
@@ -288,30 +259,81 @@ const UsersPage = () => {
                       </Box>
                     )}
 
-                    {user.skills && user.skills.length > 0 && (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          gap: 0.5,
-                          flexWrap: "wrap",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {user.skills.slice(0, 3).map((skill, index) => (
-                          <Chip
-                            key={index}
-                            label={skill.name}
-                            size="small"
-                            variant="outlined"
-                          />
-                        ))}
-                        {user.skills.length > 3 && (
-                          <Chip
-                            label={`+${user.skills.length - 3}`}
-                            size="small"
-                            variant="outlined"
-                          />
-                        )}
+                    {user.availability && user.availability.length > 0 && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          gutterBottom
+                        >
+                          Available:
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 0.5,
+                            flexWrap: "wrap",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {user.availability.slice(0, 2).map((avail, index) => (
+                            <Chip
+                              key={index}
+                              label={avail}
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                            />
+                          ))}
+                          {user.availability.length > 2 && (
+                            <Chip
+                              label={`+${user.availability.length - 2}`}
+                              size="small"
+                              variant="outlined"
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    )}
+
+                    {user.offeredSkills && user.offeredSkills.length > 0 && (
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          gutterBottom
+                        >
+                          Offers:
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 0.5,
+                            flexWrap: "wrap",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {user.offeredSkills
+                            .slice(0, 3)
+                            .map((skill, index) => (
+                              <Chip
+                                key={index}
+                                label={
+                                  typeof skill === "string" ? skill : skill.name
+                                }
+                                size="small"
+                                variant="outlined"
+                                color="success"
+                              />
+                            ))}
+                          {user.offeredSkills.length > 3 && (
+                            <Chip
+                              label={`+${user.offeredSkills.length - 3}`}
+                              size="small"
+                              variant="outlined"
+                            />
+                          )}
+                        </Box>
                       </Box>
                     )}
                   </CardContent>

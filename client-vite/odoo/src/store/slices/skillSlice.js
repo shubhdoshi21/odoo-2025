@@ -125,8 +125,15 @@ const skillSlice = createSlice({
       })
       .addCase(getAllSkills.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.skills = action.payload.skills;
-        state.pagination = action.payload.pagination;
+        state.skills =
+          action.payload.data?.skills || action.payload.skills || [];
+        state.pagination = action.payload.data?.pagination ||
+          action.payload.pagination || {
+            page: 1,
+            limit: 10,
+            total: 0,
+            pages: 0,
+          };
       })
       .addCase(getAllSkills.rejected, (state, action) => {
         state.isLoading = false;
@@ -139,7 +146,8 @@ const skillSlice = createSlice({
       })
       .addCase(searchSkills.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.skills = action.payload.skills;
+        state.skills =
+          action.payload.data?.skills || action.payload.skills || [];
       })
       .addCase(searchSkills.rejected, (state, action) => {
         state.isLoading = false;
@@ -166,8 +174,15 @@ const skillSlice = createSlice({
       })
       .addCase(getSkillsByCategory.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.skills = action.payload.skills;
-        state.pagination = action.payload.pagination;
+        state.skills =
+          action.payload.data?.skills || action.payload.skills || [];
+        state.pagination = action.payload.data?.pagination ||
+          action.payload.pagination || {
+            page: 1,
+            limit: 10,
+            total: 0,
+            pages: 0,
+          };
       })
       .addCase(getSkillsByCategory.rejected, (state, action) => {
         state.isLoading = false;
@@ -180,7 +195,7 @@ const skillSlice = createSlice({
       })
       .addCase(getSkillById.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.currentSkill = action.payload.skill;
+        state.currentSkill = action.payload.data?.skill || action.payload.skill;
       })
       .addCase(getSkillById.rejected, (state, action) => {
         state.isLoading = false;
