@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Typography,
@@ -10,21 +10,68 @@ import {
   Switch,
   Chip,
   Grid,
-  IconButton,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
+import { getUserById } from "../store/slices/userSlice"; // Adjust path as needed
 
 const ProfilePage = () => {
+  const dispatch = useDispatch();
+
+//   useEffect(() => {
+//   dispatch({
+//     type: "users/getUserById/fulfilled", // mock success action
+//     payload: {
+//       user: {
+//         id: "dummy123",
+//         name: "Test User",
+//         location: "Testville",
+//         isPublic: true,
+//         offeredSkills: ["React", "Node.js"],
+//         wantedSkills: ["Go", "Rust"],
+//         profilePhotoUrl: "", // optional
+//         availability: ["Evenings", "Weekends"],
+//       },
+//     },
+//   });
+// }, [dispatch]);
+
+  // Replace with actual logic to get the logged-in user's ID (from auth)
+  const loggedInUserId = useSelector((state) => state.auth.user?.id);
+
+  // Redux store data
+  const currentUser = useSelector((state) => state.users.currentUser);
+  const isLoading = useSelector((state) => state.users.isLoading);
+
+  // Local UI state
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [offeredSkills, setOfferedSkills] = useState([]);
+  const [wantedSkills, setWantedSkills] = useState([]);
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [previewPhoto, setPreviewPhoto] = useState(null);
-  const [name, setName] = useState("John Doe");
-  const [location, setLocation] = useState("Mumbai");
-  const [isPublic, setIsPublic] = useState(true);
-  const [availability, setAvailability] = useState([]);
-  const [offeredSkills, setOfferedSkills] = useState(["Web Development"]);
-  const [wantedSkills, setWantedSkills] = useState(["Photography"]);
   const [newOfferedSkill, setNewOfferedSkill] = useState("");
   const [newWantedSkill, setNewWantedSkill] = useState("");
+
+  useEffect(() => {
+    if (loggedInUserId) {
+      dispatch(getUserById(loggedInUserId));
+    }
+  }, [dispatch, loggedInUserId]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name || "");
+      setLocation(currentUser.location || "");
+      setIsPublic(currentUser.isPublic);
+      setOfferedSkills(currentUser.offeredSkills || []);
+      setWantedSkills(currentUser.wantedSkills || []);
+      if (currentUser.profilePhotoUrl) {
+        setPreviewPhoto(currentUser.profilePhotoUrl);
+      }
+    }
+  }, [currentUser]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -44,7 +91,7 @@ const ProfilePage = () => {
 
   const handleAddSkill = (e, type) => {
     e.preventDefault();
-    const skill = type === "offered" ? newOfferedSkill.trim() : newWantedSkill.trim();
+    const skill = (type === "offered" ? newOfferedSkill : newWantedSkill).trim();
     if (!skill) return;
 
     if (type === "offered" && !offeredSkills.includes(skill)) {
@@ -59,17 +106,27 @@ const ProfilePage = () => {
   };
 
   const handleSubmit = () => {
-    // Construct form data and send to backend
-    console.log({
-      profilePhoto,
-      name,
-      location,
-      isPublic,
-      availability,
-      offeredSkills,
-      wantedSkills,
-    });
+    // Call update API with edited values
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("location", location);
+    formData.append("isPublic", isPublic);
+    formData.append("offeredSkills", JSON.stringify(offeredSkills));
+    formData.append("wantedSkills", JSON.stringify(wantedSkills));
+    formData.append("availability", JSON.stringify(currentUser.availability || []));
+    if (profilePhoto) formData.append("profilePhoto", profilePhoto);
+
+    // Example: userService.updateUserProfile(loggedInUserId, formData);
+    console.log("Submitting:", Object.fromEntries(formData));
   };
+
+  if (isLoading || !currentUser) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography>Loading profile...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
