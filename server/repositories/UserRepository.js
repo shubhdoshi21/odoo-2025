@@ -251,6 +251,96 @@ class UserRepository {
       throw error;
     }
   }
+
+  // Static methods for AdminService
+  static async countAll() {
+    try {
+      return await User.countDocuments();
+    } catch (error) {
+      throw new Error(`Error counting all users: ${error.message}`);
+    }
+  }
+
+  static async countByStatus(status) {
+    try {
+      const query =
+        status === "active" ? { isBanned: false } : { isBanned: true };
+      return await User.countDocuments(query);
+    } catch (error) {
+      throw new Error(`Error counting users by status: ${error.message}`);
+    }
+  }
+
+  static async getAllUsers(options = {}) {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        status,
+        sortBy = "createdAt",
+        sortOrder = "desc",
+      } = options;
+
+      const query = {};
+
+      if (status === "active") {
+        query.isBanned = false;
+      } else if (status === "banned") {
+        query.isBanned = true;
+      }
+
+      if (search) {
+        query.$or = [
+          { username: { $regex: search, $options: "i" } },
+          { firstName: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      const sortOptions = {};
+      sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+
+      const skip = (page - 1) * limit;
+
+      const [users, total] = await Promise.all([
+        User.find(query)
+          .select("-password")
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limit)
+          .exec(),
+        User.countDocuments(query),
+      ]);
+
+      const pages = Math.ceil(total / limit);
+
+      return {
+        users,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Error getting all users: ${error.message}`);
+    }
+  }
+
+  static async getRecentUsers(limit = 10) {
+    try {
+      return await User.find()
+        .select("-password")
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .exec();
+    } catch (error) {
+      throw new Error(`Error getting recent users: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new UserRepository();

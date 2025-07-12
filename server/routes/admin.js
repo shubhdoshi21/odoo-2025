@@ -92,15 +92,15 @@ const adminSearchValidation = [
 
 // Routes
 // POST /api/admin/login - Admin login
-router.post(
-  "/login",
-  adminLoginValidation,
-  handleValidationErrors,
-  AdminController.login
-);
+// router.post(
+//   "/login",
+//   adminLoginValidation,
+//   handleValidationErrors,
+//   AdminController.login
+// );
 
 // GET /api/admin/profile - Get admin profile
-router.get("/profile", protectAdmin, AdminController.getProfile);
+// router.get("/profile", protectAdmin, AdminController.getProfile);
 
 // GET /api/admin/dashboard - Get admin dashboard stats
 router.get("/dashboard", protectAdmin, AdminController.getDashboardStats);
@@ -123,12 +123,20 @@ router.get(
   AdminController.getUserById
 );
 
-// PATCH /api/admin/users/:id/ban - Ban/unban user
+// PATCH /api/admin/users/:id/ban - Ban user
 router.patch(
   "/users/:id/ban",
   protectAdmin,
   requireRole("moderator"),
-  AdminController.toggleUserBan
+  AdminController.banUser
+);
+
+// PATCH /api/admin/users/:id/unban - Unban user
+router.patch(
+  "/users/:id/unban",
+  protectAdmin,
+  requireRole("moderator"),
+  AdminController.unbanUser
 );
 
 // GET /api/admin/swaps - Get all swaps (admin view)
@@ -168,7 +176,7 @@ router.delete(
 );
 
 // GET /api/admin/messages - Get admin messages
-router.get("/messages", protectAdmin, AdminController.getMessages);
+router.get("/messages", protectAdmin, AdminController.getAdminMessages);
 
 // POST /api/admin/messages - Create admin message
 router.post(
@@ -177,26 +185,26 @@ router.post(
   requireRole("moderator"),
   createMessageValidation,
   handleValidationErrors,
-  AdminController.createMessage
+  AdminController.sendAdminMessage
 );
 
 // PUT /api/admin/messages/:id - Update admin message
-router.put(
-  "/messages/:id",
-  protectAdmin,
-  requireRole("moderator"),
-  createMessageValidation,
-  handleValidationErrors,
-  AdminController.updateMessage
-);
+// router.put(
+//   "/messages/:id",
+//   protectAdmin,
+//   requireRole("moderator"),
+//   createMessageValidation,
+//   handleValidationErrors,
+//   AdminController.updateMessage
+// );
 
 // DELETE /api/admin/messages/:id - Delete admin message
-router.delete(
-  "/messages/:id",
-  protectAdmin,
-  requireRole("moderator"),
-  AdminController.deleteMessage
-);
+// router.delete(
+//   "/messages/:id",
+//   protectAdmin,
+//   requireRole("moderator"),
+//   AdminController.deleteMessage
+// );
 
 // GET /api/admin/logs - Get moderation logs
 router.get(
@@ -209,55 +217,55 @@ router.get(
 );
 
 // POST /api/admin/logs - Create moderation log
-router.post(
-  "/logs",
-  protectAdmin,
-  requireRole("moderator"),
-  moderationActionValidation,
-  handleValidationErrors,
-  AdminController.createModerationLog
-);
+// router.post(
+//   "/logs",
+//   protectAdmin,
+//   requireRole("moderator"),
+//   moderationActionValidation,
+//   handleValidationErrors,
+//   AdminController.createModerationLog
+// );
 
 // GET /api/admin/stats - Get detailed statistics
-router.get(
-  "/stats",
-  protectAdmin,
-  requireRole("moderator"),
-  AdminController.getDetailedStats
-);
+// router.get(
+//   "/stats",
+//   protectAdmin,
+//   requireRole("moderator"),
+//   AdminController.getDetailedStats
+// );
 
 // POST /api/admin/admins - Create new admin (superadmin only)
-router.post(
-  "/admins",
-  protectAdmin,
-  requireRole("superadmin"),
-  createAdminValidation,
-  handleValidationErrors,
-  AdminController.createAdmin
-);
+// router.post(
+//   "/admins",
+//   protectAdmin,
+//   requireRole("superadmin"),
+//   createAdminValidation,
+//   handleValidationErrors,
+//   AdminController.createAdmin
+// );
 
 // GET /api/admin/admins - Get all admins
-router.get(
-  "/admins",
-  protectAdmin,
-  requireRole("superadmin"),
-  AdminController.getAllAdmins
-);
+// router.get(
+//   "/admins",
+//   protectAdmin,
+//   requireRole("superadmin"),
+//   AdminController.getAllAdmins
+// );
 
 // PATCH /api/admin/admins/:id - Update admin
-router.patch(
-  "/admins/:id",
-  protectAdmin,
-  requireRole("superadmin"),
-  AdminController.updateAdmin
-);
+// router.patch(
+//   "/admins/:id",
+//   protectAdmin,
+//   requireRole("superadmin"),
+//   AdminController.updateAdmin
+// );
 
 // DELETE /api/admin/admins/:id - Delete admin
-router.delete(
-  "/admins/:id",
-  protectAdmin,
-  requireRole("superadmin"),
-  AdminController.deleteAdmin
-);
+// router.delete(
+//   "/admins/:id",
+//   protectAdmin,
+//   requireRole("superadmin"),
+//   AdminController.deleteAdmin
+// );
 
 module.exports = router;

@@ -420,6 +420,38 @@ class SwapRepository {
       throw new Error(`Error checking swap eligibility: ${error.message}`);
     }
   }
+
+  // Static methods for AdminService
+  static async countAll() {
+    try {
+      return await Swap.countDocuments();
+    } catch (error) {
+      throw new Error(`Error counting all swaps: ${error.message}`);
+    }
+  }
+
+  static async countByStatus(status) {
+    try {
+      return await Swap.countDocuments({ status });
+    } catch (error) {
+      throw new Error(`Error counting swaps by status: ${error.message}`);
+    }
+  }
+
+  static async getRecentSwaps(limit = 10) {
+    try {
+      return await Swap.find()
+        .populate("requesterId", "username firstName lastName email")
+        .populate("providerId", "username firstName lastName email")
+        .populate("requestedSkillId", "name category")
+        .populate("offeredSkillId", "name category")
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .exec();
+    } catch (error) {
+      throw new Error(`Error getting recent swaps: ${error.message}`);
+    }
+  }
 }
 
 module.exports = SwapRepository;

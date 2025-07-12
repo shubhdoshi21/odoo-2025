@@ -47,7 +47,6 @@ const skillSchema = new mongoose.Schema(
 );
 
 // Indexes for search optimization
-skillSchema.index({ name: 1 });
 skillSchema.index({ name: "text" }); // Text index for search
 skillSchema.index({ category: 1 });
 skillSchema.index({ isActive: 1 });

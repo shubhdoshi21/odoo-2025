@@ -96,7 +96,6 @@ userSchema.virtual("profilePhotoUrl").get(function () {
 
 // Index for search optimization
 userSchema.index({ isPublic: 1, offeredSkills: 1, wantedSkills: 1 });
-userSchema.index({ email: 1 });
 userSchema.index({ isBanned: 1 });
 
 // Pre-save middleware to hash password
