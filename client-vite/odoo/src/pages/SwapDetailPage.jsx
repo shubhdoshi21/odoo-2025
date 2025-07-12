@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -23,7 +23,13 @@ import {
   Select,
   MenuItem,
   Alert,
-} from "@mui/material";
+  Rating,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  Paper,
+} from '@mui/material';
 import {
   SwapHoriz,
   ArrowBack,
@@ -33,11 +39,13 @@ import {
   Schedule,
   Person,
   Send,
-} from "@mui/icons-material";
-import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { getSwapById } from "../store/slices/swapSlice";
-import LoadingSpinner from "../components/common/LoadingSpinner";
+  Star,
+  Add,
+} from '@mui/icons-material';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { getSwapById } from '../store/slices/swapSlice';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const SwapDetailPage = () => {
   const theme = useTheme();
@@ -46,16 +54,24 @@ const SwapDetailPage = () => {
   const { swapId } = useParams();
 
   const { currentSwap, isLoading: swapLoading } = useSelector(
-    (state) => state.swaps
+    state => state.swaps,
   );
-  const { user: currentUser } = useSelector((state) => state.auth);
+  const { user: currentUser } = useSelector(state => state.auth);
 
   const [showCreateRequestDialog, setShowCreateRequestDialog] = useState(false);
   const [requestData, setRequestData] = useState({
-    offeredSkill: "",
-    wantedSkill: "",
-    message: "",
+    offeredSkill: '',
+    wantedSkill: '',
+    message: '',
   });
+
+  // Feedback state
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [feedbackData, setFeedbackData] = useState({
+    rating: 0,
+    comment: '',
+  });
+  const [feedbacks, setFeedbacks] = useState([]);
 
   useEffect(() => {
     if (swapId) {
@@ -65,30 +81,30 @@ const SwapDetailPage = () => {
 
   // Debug: Log swap data
   useEffect(() => {
-    console.log("SwapDetailPage - currentSwap:", currentSwap);
+    console.log('SwapDetailPage - currentSwap:', currentSwap);
     if (currentSwap) {
-      console.log("SwapDetailPage - requester:", currentSwap.requester);
-      console.log("SwapDetailPage - responder:", currentSwap.responder);
-      console.log("SwapDetailPage - offeredSkill:", currentSwap.offeredSkill);
+      console.log('SwapDetailPage - requester:', currentSwap.requester);
+      console.log('SwapDetailPage - responder:', currentSwap.responder);
+      console.log('SwapDetailPage - offeredSkill:', currentSwap.offeredSkill);
       console.log(
-        "SwapDetailPage - requestedSkill:",
-        currentSwap.requestedSkill
+        'SwapDetailPage - requestedSkill:',
+        currentSwap.requestedSkill,
       );
     }
   }, [currentSwap]);
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case "pending":
-        return "warning";
-      case "accepted":
-        return "info";
-      case "completed":
-        return "success";
-      case "cancelled":
-        return "error";
+      case 'pending':
+        return 'warning';
+      case 'accepted':
+        return 'info';
+      case 'completed':
+        return 'success';
+      case 'cancelled':
+        return 'error';
       default:
-        return "default";
+        return 'default';
     }
   };
 
@@ -98,9 +114,36 @@ const SwapDetailPage = () => {
 
   const handleSubmitRequest = () => {
     // Handle request submission logic here
-    console.log("Submitting request:", requestData);
+    console.log('Submitting request:', requestData);
     setShowCreateRequestDialog(false);
-    setRequestData({ offeredSkill: "", wantedSkill: "", message: "" });
+    setRequestData({ offeredSkill: '', wantedSkill: '', message: '' });
+  };
+
+  // Feedback handlers
+  const handleAddFeedback = () => {
+    setShowFeedbackDialog(true);
+  };
+
+  const handleSubmitFeedback = () => {
+    if (feedbackData.rating > 0 && feedbackData.comment.trim()) {
+      const newFeedback = {
+        id: Date.now(),
+        rating: feedbackData.rating,
+        comment: feedbackData.comment,
+        user: currentUser?.name || 'Anonymous',
+        userAvatar: currentUser?.profilePhotoUrl,
+        createdAt: new Date().toISOString(),
+      };
+
+      setFeedbacks([...feedbacks, newFeedback]);
+      setFeedbackData({ rating: 0, comment: '' });
+      setShowFeedbackDialog(false);
+    }
+  };
+
+  const handleCancelFeedback = () => {
+    setFeedbackData({ rating: 0, comment: '' });
+    setShowFeedbackDialog(false);
   };
 
   if (swapLoading) {
@@ -110,13 +153,13 @@ const SwapDetailPage = () => {
   if (!currentSwap) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ textAlign: "center", py: 8 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Swap not found
           </Typography>
           <Button
             variant="outlined"
-            onClick={() => navigate("/swaps")}
+            onClick={() => navigate('/swaps')}
             startIcon={<ArrowBack />}
           >
             Back to Swaps
@@ -146,9 +189,9 @@ const SwapDetailPage = () => {
         <CardContent>
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
               mb: 3,
             }}
           >
@@ -173,30 +216,30 @@ const SwapDetailPage = () => {
             <Button
               variant="outlined"
               startIcon={<ArrowBack />}
-              onClick={() => navigate("/swaps")}
+              onClick={() => navigate('/swaps')}
             >
               Back to Swaps
             </Button>
           </Box>
 
           {/* Skills Exchange */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <School color="primary" />
               <Typography variant="h6">
                 {currentSwap.offeredSkill?.name ||
                   `Skill ${
-                    currentSwap.offeredSkill?._id?.slice(-6) || "Unknown"
+                    currentSwap.offeredSkill?._id?.slice(-6) || 'Unknown'
                   }`}
               </Typography>
             </Box>
             <SwapHoriz color="action" />
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <School color="primary" />
               <Typography variant="h6">
                 {currentSwap.requestedSkill?.name ||
                   `Skill ${
-                    currentSwap.requestedSkill?._id?.slice(-6) || "Unknown"
+                    currentSwap.requestedSkill?._id?.slice(-6) || 'Unknown'
                   }`}
               </Typography>
             </Box>
@@ -209,7 +252,8 @@ const SwapDetailPage = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <AccessTime color="action" />
                   <Typography variant="body2" color="text.secondary">
-                    Scheduled: {new Date(currentSwap.scheduledDate).toLocaleDateString()}
+                    Scheduled:{' '}
+                    {new Date(currentSwap.scheduledDate).toLocaleDateString()}
                   </Typography>
                 </Box>
               </Grid>
@@ -222,14 +266,16 @@ const SwapDetailPage = () => {
             {currentSwap.rejectedAt && (
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="body2" color="text.secondary">
-                  Rejected: {new Date(currentSwap.rejectedAt).toLocaleDateString()}
+                  Rejected:{' '}
+                  {new Date(currentSwap.rejectedAt).toLocaleDateString()}
                 </Typography>
               </Grid>
             )}
             {currentSwap.cancelledAt && (
               <Grid item xs={12} sm={6} md={3}>
                 <Typography variant="body2" color="text.secondary">
-                  Cancelled: {new Date(currentSwap.cancelledAt).toLocaleDateString()}
+                  Cancelled:{' '}
+                  {new Date(currentSwap.cancelledAt).toLocaleDateString()}
                 </Typography>
               </Grid>
             )}
@@ -239,7 +285,9 @@ const SwapDetailPage = () => {
           {(currentSwap.rejectionReason || currentSwap.cancellationReason) && (
             <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
               <Typography variant="subtitle2" gutterBottom>
-                {currentSwap.rejectionReason ? 'Rejection Reason:' : 'Cancellation Reason:'}
+                {currentSwap.rejectionReason
+                  ? 'Rejection Reason:'
+                  : 'Cancellation Reason:'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {currentSwap.rejectionReason || currentSwap.cancellationReason}
@@ -259,20 +307,20 @@ const SwapDetailPage = () => {
                 Swap Requester
               </Typography>
               <Box
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+                sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
               >
                 <Avatar
                   src={currentSwap.requester?.profilePhotoUrl}
-                  alt={currentSwap.requester?.name || "Requester"}
+                  alt={currentSwap.requester?.name || 'Requester'}
                   sx={{ width: 60, height: 60 }}
                 >
-                  {currentSwap.requester?.name?.[0] || "R"}
+                  {currentSwap.requester?.name?.[0] || 'R'}
                 </Avatar>
                 <Box>
                   <Typography variant="h6">
                     {currentSwap.requester?.name ||
                       `User ${
-                        currentSwap.requester?._id?.slice(-6) || "Unknown"
+                        currentSwap.requester?._id?.slice(-6) || 'Unknown'
                       }`}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -281,8 +329,8 @@ const SwapDetailPage = () => {
                   {currentSwap.requester?.location && (
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 0.5,
                         mt: 0.5,
                       }}
@@ -302,18 +350,18 @@ const SwapDetailPage = () => {
                     <Typography variant="subtitle2" gutterBottom>
                       Skills Offered:
                     </Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {currentSwap.requester.offeredSkills.map(
                         (skill, index) => (
                           <Chip
                             key={index}
                             label={
-                              typeof skill === "string" ? skill : skill.name
+                              typeof skill === 'string' ? skill : skill.name
                             }
                             size="small"
                             variant="outlined"
                           />
-                        )
+                        ),
                       )}
                     </Box>
                   </Box>
@@ -325,19 +373,19 @@ const SwapDetailPage = () => {
                     <Typography variant="subtitle2" gutterBottom>
                       Skills Wanted:
                     </Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {currentSwap.requester.wantedSkills.map(
                         (skill, index) => (
                           <Chip
                             key={index}
                             label={
-                              typeof skill === "string" ? skill : skill.name
+                              typeof skill === 'string' ? skill : skill.name
                             }
                             size="small"
                             color="primary"
                             variant="outlined"
                           />
-                        )
+                        ),
                       )}
                     </Box>
                   </Box>
@@ -354,20 +402,20 @@ const SwapDetailPage = () => {
                 Swap Responder
               </Typography>
               <Box
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+                sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}
               >
                 <Avatar
                   src={currentSwap.responder?.profilePhotoUrl}
-                  alt={currentSwap.responder?.name || "Responder"}
+                  alt={currentSwap.responder?.name || 'Responder'}
                   sx={{ width: 60, height: 60 }}
                 >
-                  {currentSwap.responder?.name?.[0] || "R"}
+                  {currentSwap.responder?.name?.[0] || 'R'}
                 </Avatar>
                 <Box>
                   <Typography variant="h6">
                     {currentSwap.responder?.name ||
                       `User ${
-                        currentSwap.responder?._id?.slice(-6) || "Unknown"
+                        currentSwap.responder?._id?.slice(-6) || 'Unknown'
                       }`}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -376,8 +424,8 @@ const SwapDetailPage = () => {
                   {currentSwap.responder?.location && (
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 0.5,
                         mt: 0.5,
                       }}
@@ -397,18 +445,18 @@ const SwapDetailPage = () => {
                     <Typography variant="subtitle2" gutterBottom>
                       Skills Offered:
                     </Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {currentSwap.responder.offeredSkills.map(
                         (skill, index) => (
                           <Chip
                             key={index}
                             label={
-                              typeof skill === "string" ? skill : skill.name
+                              typeof skill === 'string' ? skill : skill.name
                             }
                             size="small"
                             variant="outlined"
                           />
-                        )
+                        ),
                       )}
                     </Box>
                   </Box>
@@ -420,19 +468,19 @@ const SwapDetailPage = () => {
                     <Typography variant="subtitle2" gutterBottom>
                       Skills Wanted:
                     </Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {currentSwap.responder.wantedSkills.map(
                         (skill, index) => (
                           <Chip
                             key={index}
                             label={
-                              typeof skill === "string" ? skill : skill.name
+                              typeof skill === 'string' ? skill : skill.name
                             }
                             size="small"
                             color="primary"
                             variant="outlined"
                           />
-                        )
+                        ),
                       )}
                     </Box>
                   </Box>
@@ -441,6 +489,93 @@ const SwapDetailPage = () => {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Feedback Section */}
+      <Card sx={{ mt: 4 }}>
+        <CardContent>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 3,
+            }}
+          >
+            <Typography variant="h6">Feedback & Reviews</Typography>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddFeedback}
+            >
+              Add Feedback
+            </Button>
+          </Box>
+
+          {feedbacks.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Star sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+              <Typography variant="body1" color="text.secondary" gutterBottom>
+                No feedback yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Be the first to share your experience with this swap
+              </Typography>
+            </Box>
+          ) : (
+            <List>
+              {feedbacks.map(feedback => (
+                <ListItem
+                  key={feedback.id}
+                  alignItems="flex-start"
+                  sx={{ px: 0 }}
+                >
+                  <ListItemAvatar>
+                    <Avatar src={feedback.userAvatar}>
+                      {feedback.user?.[0] || 'U'}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle1" component="span">
+                          {feedback.user}
+                        </Typography>
+                        <Rating value={feedback.rating} readOnly size="small" />
+                      </Box>
+                    }
+                    secondary={
+                      <>
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          color="text.primary"
+                          sx={{ display: 'block', mb: 1 }}
+                        >
+                          {feedback.comment}
+                        </Typography>
+                        <Typography
+                          component="span"
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          {new Date(feedback.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </>
+                    }
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Create Request Dialog */}
       <Dialog
@@ -451,22 +586,22 @@ const SwapDetailPage = () => {
       >
         <DialogTitle>Create Swap Request</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <FormControl fullWidth>
               <InputLabel>My Offered Skill</InputLabel>
               <Select
                 value={requestData.offeredSkill}
                 label="My Offered Skill"
-                onChange={(e) =>
+                onChange={e =>
                   setRequestData({
                     ...requestData,
                     offeredSkill: e.target.value,
                   })
                 }
               >
-                {currentUser?.offeredSkills?.map((skill) => (
+                {currentUser?.offeredSkills?.map(skill => (
                   <MenuItem key={skill._id || skill} value={skill._id || skill}>
-                    {typeof skill === "string" ? skill : skill.name}
+                    {typeof skill === 'string' ? skill : skill.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -477,16 +612,16 @@ const SwapDetailPage = () => {
               <Select
                 value={requestData.wantedSkill}
                 label="Their Offered Skill (What I Want)"
-                onChange={(e) =>
+                onChange={e =>
                   setRequestData({
                     ...requestData,
                     wantedSkill: e.target.value,
                   })
                 }
               >
-                {currentSwap.responder?.offeredSkills?.map((skill) => (
+                {currentSwap.responder?.offeredSkills?.map(skill => (
                   <MenuItem key={skill._id || skill} value={skill._id || skill}>
-                    {typeof skill === "string" ? skill : skill.name}
+                    {typeof skill === 'string' ? skill : skill.name}
                   </MenuItem>
                 ))}
               </Select>
@@ -498,7 +633,7 @@ const SwapDetailPage = () => {
               multiline
               rows={4}
               value={requestData.message}
-              onChange={(e) =>
+              onChange={e =>
                 setRequestData({ ...requestData, message: e.target.value })
               }
               placeholder="Describe what you want to exchange and any specific requirements..."
@@ -515,6 +650,54 @@ const SwapDetailPage = () => {
             disabled={!requestData.offeredSkill || !requestData.wantedSkill}
           >
             Submit Request
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Feedback Dialog */}
+      <Dialog
+        open={showFeedbackDialog}
+        onClose={handleCancelFeedback}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add Feedback</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Rate your experience:
+              </Typography>
+              <Rating
+                value={feedbackData.rating}
+                onChange={(event, newValue) => {
+                  setFeedbackData({ ...feedbackData, rating: newValue });
+                }}
+                size="large"
+              />
+            </Box>
+
+            <TextField
+              fullWidth
+              label="Your feedback"
+              multiline
+              rows={4}
+              value={feedbackData.comment}
+              onChange={e =>
+                setFeedbackData({ ...feedbackData, comment: e.target.value })
+              }
+              placeholder="Share your experience with this skill swap..."
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelFeedback}>Cancel</Button>
+          <Button
+            onClick={handleSubmitFeedback}
+            variant="contained"
+            disabled={!feedbackData.rating || !feedbackData.comment.trim()}
+          >
+            Submit Feedback
           </Button>
         </DialogActions>
       </Dialog>

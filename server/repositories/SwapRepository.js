@@ -354,12 +354,12 @@ class SwapRepository {
           {
             requester: requesterId,
             responder: responderId,
-            status: { $in: ["pending", "accepted"] },
+            status: { $in: ["pending"] },
           },
           {
             requester: responderId,
             responder: requesterId,
-            status: { $in: ["pending", "accepted"] },
+            status: { $in: ["pending"] },
           },
         ],
       });

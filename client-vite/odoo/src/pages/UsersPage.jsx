@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
@@ -39,18 +38,20 @@ const UsersPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { users, pagination, isLoading } = useSelector(state => state.users);
+  const { user: currentUser } = useSelector(state => state.auth);
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [availability, setAvailability] = useState(
     searchParams.get('availability') || '',
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 12;
 
-  // Load all users on component mount (we'll filter on frontend)
+  // Filter out current user from the users list
+  const filteredUsers = users.filter(user => user._id !== currentUser?._id);
+
+  // Load users on component mount
   useEffect(() => {
-    dispatch(getAllUsers({ page: 1, limit: 1000, isPublic: true })); // Get more users for frontend filtering
+    dispatch(getAllUsers({ page: 1, limit: 12 }));
   }, [dispatch]);
 
   const handleSearch = e => {
@@ -88,7 +89,6 @@ const UsersPage = () => {
     } else {
       dispatch(getAllUsers(params));
     }
-
   };
 
   const clearFilters = () => {
@@ -96,7 +96,7 @@ const UsersPage = () => {
     setLocation('');
     setAvailability('');
     setSearchParams({});
-    setCurrentPage(1);
+    dispatch(getAllUsers({ page: 1, limit: 12 }));
   };
 
   if (isLoading) {
@@ -113,13 +113,6 @@ const UsersPage = () => {
         <Typography variant="body1" color="text.secondary">
           Find people to exchange skills with
         </Typography>
-        {users.length > 0 && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Showing {paginatedUsers.length} of {filteredUsers.length} users
-            {filteredUsers.length !== users.length &&
-              ` (filtered from ${users.length} total)`}
-          </Typography>
-        )}
       </Box>
 
       {/* Search and Filters */}
@@ -200,10 +193,10 @@ const UsersPage = () => {
       </Card>
 
       {/* Users Grid */}
-      {paginatedUsers.length > 0 ? (
+      {filteredUsers.length > 0 ? (
         <>
           <Grid container spacing={3}>
-            {users.map(user => (
+            {filteredUsers.map(user => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={user._id}>
                 <Card
                   sx={{
@@ -356,8 +349,8 @@ const UsersPage = () => {
           {pagination.pages > 1 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <Pagination
-                count={totalPages}
-                page={currentPage}
+                count={pagination.pages}
+                page={pagination.page}
                 onChange={handlePageChange}
                 color="primary"
                 size="large"
@@ -368,14 +361,10 @@ const UsersPage = () => {
       ) : (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            {filteredUsers.length === 0 && users.length > 0
-              ? "No users match your search criteria"
-              : "No users found"}
+            No users found
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {filteredUsers.length === 0 && users.length > 0
-              ? "Try adjusting your search criteria"
-              : "No users are currently available"}
+            Try adjusting your search criteria
           </Typography>
         </Box>
       )}
