@@ -80,6 +80,7 @@ class SwapController {
       }
 
       const { swapId } = req.params;
+      console.log("swapId", swapId);
       const userId = req.user.id;
 
       const swap = await SwapService.getSwapById(swapId, userId);

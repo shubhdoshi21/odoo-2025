@@ -35,10 +35,6 @@ const userSearchValidation = [
     .withMessage('Location search term cannot exceed 200 characters'),
   query('availability')
     .optional()
-    .isArray()
-    .withMessage('Availability must be an array'),
-  query('availability.*')
-    .optional()
     .isIn([
       'Weekdays',
       'Weekends',
@@ -61,7 +57,7 @@ router.get(
 );
 
 // GET /api/users/search - Search users
-router.get('/search', optionalAuth, UserController.searchUsers);
+router.get('/search', optionalAuth, userSearchValidation, handleValidationErrors, UserController.searchUsers);
 
 // GET /api/users/top-rated - Get top rated users
 router.get('/top-rated', optionalAuth, UserController.getTopRatedUsers);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -18,18 +18,18 @@ import {
   Pagination,
   InputAdornment,
   useTheme,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Search as SearchIcon,
   LocationOn,
   Star,
   FilterList,
   Person,
-} from "@mui/icons-material";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { getAllUsers, searchUsers } from "../store/slices/userSlice";
-import LoadingSpinner from "../components/common/LoadingSpinner";
+} from '@mui/icons-material';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { getAllUsers, searchUsers } from '../store/slices/userSlice';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const UsersPage = () => {
   const theme = useTheme();
@@ -37,12 +37,12 @@ const UsersPage = () => {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { users, pagination, isLoading } = useSelector((state) => state.users);
+  const { users, pagination, isLoading } = useSelector(state => state.users);
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
-  const [location, setLocation] = useState(searchParams.get("location") || "");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [location, setLocation] = useState(searchParams.get('location') || '');
   const [availability, setAvailability] = useState(
-    searchParams.get("availability") || ""
+    searchParams.get('availability') || '',
   );
 
   // Load users on component mount
@@ -50,26 +50,25 @@ const UsersPage = () => {
     dispatch(getAllUsers({ page: 1, limit: 12 }));
   }, [dispatch]);
 
-  useEffect(() => {
-    const params = {};
-    if (searchQuery) params.q = searchQuery;
-    if (location) params.location = location;
-    if (availability) params.availability = availability;
+  const handleSearch = e => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (location) params.set('location', location);
+    if (availability) params.set('availability', availability);
+    setSearchParams(params);
 
-    if (Object.keys(params).length > 0) {
-      dispatch(searchUsers(params));
+    // Trigger immediate search when form is submitted
+    const searchParams = {};
+    if (searchQuery) searchParams.q = searchQuery;
+    if (location) searchParams.location = location;
+    if (availability) searchParams.availability = availability;
+
+    if (Object.keys(searchParams).length > 0) {
+      dispatch(searchUsers(searchParams));
     } else {
       dispatch(getAllUsers({ page: 1, limit: 12 }));
     }
-  }, [dispatch, searchQuery, location, availability]);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (searchQuery) params.set("q", searchQuery);
-    if (location) params.set("location", location);
-    if (availability) params.set("availability", availability);
-    setSearchParams(params);
   };
 
   const handlePageChange = (event, value) => {
@@ -79,7 +78,7 @@ const UsersPage = () => {
     if (availability) params.availability = availability;
 
     if (
-      Object.keys(params).filter((key) => key !== "page" && key !== "limit")
+      Object.keys(params).filter(key => key !== 'page' && key !== 'limit')
         .length > 0
     ) {
       dispatch(searchUsers(params));
@@ -89,9 +88,9 @@ const UsersPage = () => {
   };
 
   const clearFilters = () => {
-    setSearchQuery("");
-    setLocation("");
-    setAvailability("");
+    setSearchQuery('');
+    setLocation('');
+    setAvailability('');
     setSearchParams({});
     dispatch(getAllUsers({ page: 1, limit: 12 }));
   };
@@ -122,7 +121,7 @@ const UsersPage = () => {
                   fullWidth
                   placeholder="Search users by name..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -137,7 +136,7 @@ const UsersPage = () => {
                   fullWidth
                   placeholder="Location"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={e => setLocation(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -153,7 +152,7 @@ const UsersPage = () => {
                   <Select
                     value={availability}
                     label="Availability"
-                    onChange={(e) => setAvailability(e.target.value)}
+                    onChange={e => setAvailability(e.target.value)}
                   >
                     <MenuItem value="">Any Availability</MenuItem>
                     <MenuItem value="Weekdays">Weekdays</MenuItem>
@@ -166,7 +165,7 @@ const UsersPage = () => {
                 </FormControl>
               </Grid>
               <Grid item xs={12} sm={6} md={2}>
-                <Box sx={{ display: "flex", gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                   <Button
                     type="submit"
                     variant="contained"
@@ -193,27 +192,27 @@ const UsersPage = () => {
       {users.length > 0 ? (
         <>
           <Grid container spacing={3}>
-            {users.map((user) => (
+            {users.map(user => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={user._id}>
                 <Card
                   sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    cursor: "pointer",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      transition: "transform 0.3s ease-in-out",
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      transition: 'transform 0.3s ease-in-out',
                       boxShadow: theme.shadows[8],
                     },
                   }}
                   onClick={() => navigate(`/users/${user._id}`)}
                 >
-                  <CardContent sx={{ flexGrow: 1, textAlign: "center" }}>
+                  <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
                     <Avatar
                       src={user.profilePhotoUrl}
                       alt={user.name}
-                      sx={{ width: 80, height: 80, mx: "auto", mb: 2 }}
+                      sx={{ width: 80, height: 80, mx: 'auto', mb: 2 }}
                     >
                       <Person sx={{ fontSize: 40 }} />
                     </Avatar>
@@ -223,9 +222,9 @@ const UsersPage = () => {
 
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
                         mb: 2,
                       }}
                     >
@@ -242,9 +241,9 @@ const UsersPage = () => {
                     {user.location && (
                       <Box
                         sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           mb: 2,
                         }}
                       >
@@ -270,10 +269,10 @@ const UsersPage = () => {
                         </Typography>
                         <Box
                           sx={{
-                            display: "flex",
+                            display: 'flex',
                             gap: 0.5,
-                            flexWrap: "wrap",
-                            justifyContent: "center",
+                            flexWrap: 'wrap',
+                            justifyContent: 'center',
                           }}
                         >
                           {user.availability.slice(0, 2).map((avail, index) => (
@@ -307,10 +306,10 @@ const UsersPage = () => {
                         </Typography>
                         <Box
                           sx={{
-                            display: "flex",
+                            display: 'flex',
                             gap: 0.5,
-                            flexWrap: "wrap",
-                            justifyContent: "center",
+                            flexWrap: 'wrap',
+                            justifyContent: 'center',
                           }}
                         >
                           {user.offeredSkills
@@ -319,7 +318,7 @@ const UsersPage = () => {
                               <Chip
                                 key={index}
                                 label={
-                                  typeof skill === "string" ? skill : skill.name
+                                  typeof skill === 'string' ? skill : skill.name
                                 }
                                 size="small"
                                 variant="outlined"
@@ -344,7 +343,7 @@ const UsersPage = () => {
 
           {/* Pagination */}
           {pagination.pages > 1 && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <Pagination
                 count={pagination.pages}
                 page={pagination.page}
@@ -356,7 +355,7 @@ const UsersPage = () => {
           )}
         </>
       ) : (
-        <Box sx={{ textAlign: "center", py: 8 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No users found
           </Typography>
