@@ -450,6 +450,39 @@ class FeedbackRepository {
       throw new Error(`Error getting reported feedback: ${error.message}`);
     }
   }
+
+  // Static methods for AdminService
+  static async countAll() {
+    try {
+      return await Feedback.countDocuments();
+    } catch (error) {
+      throw new Error(`Error counting all feedback: ${error.message}`);
+    }
+  }
+
+  static async countReported() {
+    try {
+      return await Feedback.countDocuments({
+        "reports.0": { $exists: true },
+      });
+    } catch (error) {
+      throw new Error(`Error counting reported feedback: ${error.message}`);
+    }
+  }
+
+  static async getRecentFeedback(limit = 10) {
+    try {
+      return await Feedback.find()
+        .populate("reviewerId", "username firstName lastName email")
+        .populate("reviewedUserId", "username firstName lastName email")
+        .populate("swapId", "title status")
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .exec();
+    } catch (error) {
+      throw new Error(`Error getting recent feedback: ${error.message}`);
+    }
+  }
 }
 
 module.exports = FeedbackRepository;

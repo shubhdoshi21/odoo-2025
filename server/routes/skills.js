@@ -133,11 +133,11 @@ router.delete(
 );
 
 // PATCH /api/skills/:id/toggle - Toggle skill active status (admin only)
-router.patch(
-  "/:id/toggle",
-  protectAdmin,
-  requireRole("moderator"),
-  SkillController.toggleSkillActive
-);
+// router.patch(
+//   "/:id/toggle",
+//   protectAdmin,
+//   requireRole("moderator"),
+//   SkillController.toggleSkillActive
+// );
 
 module.exports = router;

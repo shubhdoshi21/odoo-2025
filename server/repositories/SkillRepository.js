@@ -482,6 +482,15 @@ class SkillRepository {
       );
     }
   }
+
+  // Static methods for AdminService
+  static async countAll() {
+    try {
+      return await Skill.countDocuments();
+    } catch (error) {
+      throw new Error(`Error counting all skills: ${error.message}`);
+    }
+  }
 }
 
 module.exports = SkillRepository;
