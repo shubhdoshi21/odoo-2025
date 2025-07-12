@@ -11,13 +11,14 @@ class UserController {
         availability,
         isPublic,
       } = req.query;
-      const filters = {};
+      const filters = { isPublic: true }; // Always show only public profiles
 
       if (location) filters.location = location;
       if (availability)
         filters.availability = Array.isArray(availability)
           ? availability
           : [availability];
+      // Override isPublic filter if explicitly provided (for admin purposes)
       if (isPublic !== undefined) filters.isPublic = isPublic === "true";
 
       const result = await UserRepository.findAll(

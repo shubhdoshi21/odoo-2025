@@ -1,5 +1,6 @@
 const Skill = require("../models/Skill");
 const Swap = require("../models/Swap");
+const mongoose = require("mongoose");
 
 class SkillRepository {
   // Create new skill
@@ -94,8 +95,21 @@ class SkillRepository {
         {
           $lookup: {
             from: "users",
-            localField: "_id",
-            foreignField: "skills",
+            let: { skillId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $or: [
+                      { $in: ["$$skillId", "$offeredSkills"] },
+                      { $in: ["$$skillId", "$wantedSkills"] },
+                    ],
+                  },
+                  isPublic: true,
+                  isBanned: false,
+                },
+              },
+            ],
             as: "users",
           },
         },
@@ -293,8 +307,21 @@ class SkillRepository {
         {
           $lookup: {
             from: "users",
-            localField: "_id",
-            foreignField: "skills",
+            let: { skillId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $or: [
+                      { $in: ["$$skillId", "$offeredSkills"] },
+                      { $in: ["$$skillId", "$wantedSkills"] },
+                    ],
+                  },
+                  isPublic: true,
+                  isBanned: false,
+                },
+              },
+            ],
             as: "users",
           },
         },
@@ -479,6 +506,54 @@ class SkillRepository {
     } catch (error) {
       throw new Error(
         `Error getting skills by popularity range: ${error.message}`
+      );
+    }
+  }
+
+  // Find skill by ID with user count
+  static async findByIdWithUserCount(skillId) {
+    try {
+      const skills = await Skill.aggregate([
+        {
+          $match: { _id: new mongoose.Types.ObjectId(skillId) },
+        },
+        {
+          $lookup: {
+            from: "users",
+            let: { skillId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $or: [
+                      { $in: ["$$skillId", "$offeredSkills"] },
+                      { $in: ["$$skillId", "$wantedSkills"] },
+                    ],
+                  },
+                  isPublic: true,
+                  isBanned: false,
+                },
+              },
+            ],
+            as: "users",
+          },
+        },
+        {
+          $addFields: {
+            userCount: { $size: "$users" },
+          },
+        },
+        {
+          $project: {
+            users: 0,
+          },
+        },
+      ]);
+
+      return skills[0] || null;
+    } catch (error) {
+      throw new Error(
+        `Error finding skill by ID with user count: ${error.message}`
       );
     }
   }

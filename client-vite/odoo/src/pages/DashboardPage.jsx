@@ -109,7 +109,7 @@ const DashboardPage = () => {
       {/* Welcome Section */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom>
-          Welcome back, {user?.firstName || user?.username}!
+          Welcome back, {user?.name || "User"}!
         </Typography>
         <Typography variant="body1" color="text.secondary">
           Here's what's happening with your skill swaps
@@ -185,10 +185,10 @@ const DashboardPage = () => {
                 </Typography>
               </Box>
               <Typography variant="h4" gutterBottom>
-                {user?.rating?.toFixed(1) || "4.5"}
+                {user?.averageRating?.toFixed(1) || "0.0"}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Average rating
+                Average rating ({user?.totalRatings || 0} reviews)
               </Typography>
             </CardContent>
           </Card>
@@ -207,7 +207,7 @@ const DashboardPage = () => {
                 <Button
                   variant="contained"
                   startIcon={<Add />}
-                  onClick={() => navigate("/swaps/create")}
+                  onClick={() => navigate("/users")}
                 >
                   Create Swap
                 </Button>
@@ -238,20 +238,22 @@ const DashboardPage = () => {
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Avatar
-                  src={user?.profilePicture}
-                  alt={user?.username}
+                  src={user?.profilePhotoUrl}
+                  alt={user?.name}
                   sx={{ width: 60, height: 60, mr: 2 }}
-                />
+                >
+                  {user?.name?.[0]}
+                </Avatar>
                 <Box>
-                  <Typography variant="h6">
-                    {user?.firstName} {user?.lastName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    @{user?.username}
-                  </Typography>
+                  <Typography variant="h6">{user?.name}</Typography>
                   {user?.location && (
                     <Typography variant="body2" color="text.secondary">
                       📍 {user.location}
+                    </Typography>
+                  )}
+                  {user?.offeredSkills && user.offeredSkills.length > 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      Offers {user.offeredSkills.length} skills
                     </Typography>
                   )}
                 </Box>
@@ -263,6 +265,77 @@ const DashboardPage = () => {
               >
                 Edit Profile
               </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Skills Overview */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Skills I Offer
+              </Typography>
+              {user?.offeredSkills && user.offeredSkills.length > 0 ? (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {user.offeredSkills.slice(0, 6).map((skill, index) => (
+                    <Chip
+                      key={index}
+                      label={typeof skill === "string" ? skill : skill.name}
+                      color="primary"
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                  {user.offeredSkills.length > 6 && (
+                    <Chip
+                      label={`+${user.offeredSkills.length - 6} more`}
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No skills offered yet. Add some skills to your profile!
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Skills I Want to Learn
+              </Typography>
+              {user?.wantedSkills && user.wantedSkills.length > 0 ? (
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {user.wantedSkills.slice(0, 6).map((skill, index) => (
+                    <Chip
+                      key={index}
+                      label={typeof skill === "string" ? skill : skill.name}
+                      color="secondary"
+                      size="small"
+                      variant="outlined"
+                    />
+                  ))}
+                  {user.wantedSkills.length > 6 && (
+                    <Chip
+                      label={`+${user.wantedSkills.length - 6} more`}
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No skills wanted yet. Add skills you'd like to learn!
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -285,7 +358,9 @@ const DashboardPage = () => {
                           {getStatusIcon(swap.status)}
                         </ListItemAvatar>
                         <ListItemText
-                          primary={swap.title}
+                          primary={`${swap.offeredSkill?.name || "Skill"} ↔ ${
+                            swap.requestedSkill?.name || "Skill"
+                          }`}
                           secondary={`${swap.status} • ${new Date(
                             swap.createdAt
                           ).toLocaleDateString()}`}

@@ -173,9 +173,9 @@ class SkillController {
         });
       }
 
-      const { skillId } = req.params;
+      const { id } = req.params;
 
-      const skill = await SkillService.getSkillById(skillId);
+      const skill = await SkillService.getSkillById(id);
 
       if (!skill) {
         return res.status(404).json({
@@ -241,10 +241,10 @@ class SkillController {
         });
       }
 
-      const { skillId } = req.params;
+      const { id } = req.params;
       const updateData = req.body;
 
-      const skill = await SkillService.updateSkill(skillId, updateData);
+      const skill = await SkillService.updateSkill(id, updateData);
 
       if (!skill) {
         return res.status(404).json({
@@ -280,9 +280,9 @@ class SkillController {
         });
       }
 
-      const { skillId } = req.params;
+      const { id } = req.params;
 
-      const skill = await SkillService.deleteSkill(skillId);
+      const skill = await SkillService.deleteSkill(id);
 
       if (!skill) {
         return res.status(404).json({

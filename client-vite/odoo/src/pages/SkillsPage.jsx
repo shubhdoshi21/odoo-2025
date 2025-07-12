@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Container,
   Grid,
@@ -27,12 +27,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getAllSkills,
-  searchSkills,
-  getSkillsByCategory,
-  getPopularSkills,
-} from "../store/slices/skillSlice";
+import { getAllSkills, getPopularSkills } from "../store/slices/skillSlice";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 
 const SkillsPage = () => {
@@ -48,31 +43,61 @@ const SkillsPage = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
   const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "name");
+  const [currentPage, setCurrentPage] = useState(1);
+  const skillsPerPage = 12;
 
-  // Load skills on component mount
+  // Load all skills on component mount (we'll filter on frontend)
   useEffect(() => {
-    dispatch(getAllSkills({ page: 1, limit: 12 }));
+    dispatch(getAllSkills({ page: 1, limit: 1000 })); // Get more skills for frontend filtering
     dispatch(getPopularSkills(6));
   }, [dispatch]);
 
-  useEffect(() => {
-    const params = {};
-    if (searchQuery) params.q = searchQuery;
-    if (category) params.category = category;
-    if (sortBy) params.sortBy = sortBy;
+  // Filter and search skills on frontend
+  const filteredSkills = useMemo(() => {
+    if (!skills || skills.length === 0) return [];
 
-    if (Object.keys(params).length > 0) {
-      if (searchQuery) {
-        dispatch(searchSkills(searchQuery));
-      } else if (category) {
-        dispatch(getSkillsByCategory({ category, page: 1, limit: 12, sortBy }));
-      } else {
-        dispatch(getAllSkills({ page: 1, limit: 12, sortBy }));
-      }
-    } else {
-      dispatch(getAllSkills({ page: 1, limit: 12 }));
+    return skills.filter((skill) => {
+      // Search by name and description
+      const matchesSearch =
+        !searchQuery ||
+        skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (skill.description &&
+          skill.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      // Filter by category
+      const matchesCategory = !category || skill.category === category;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [skills, searchQuery, category]);
+
+  // Sort filtered skills
+  const sortedSkills = useMemo(() => {
+    const sorted = [...filteredSkills];
+
+    switch (sortBy) {
+      case "name":
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case "userCount":
+        return sorted.sort((a, b) => (b.userCount || 0) - (a.userCount || 0));
+      case "createdAt":
+        return sorted.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+      default:
+        return sorted;
     }
-  }, [dispatch, searchQuery, category, sortBy]);
+  }, [filteredSkills, sortBy]);
+
+  // Paginate sorted skills
+  const paginatedSkills = useMemo(() => {
+    const startIndex = (currentPage - 1) * skillsPerPage;
+    const endIndex = startIndex + skillsPerPage;
+    return sortedSkills.slice(startIndex, endIndex);
+  }, [sortedSkills, currentPage, skillsPerPage]);
+
+  // Calculate pagination info
+  const totalPages = Math.ceil(sortedSkills.length / skillsPerPage);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -81,19 +106,7 @@ const SkillsPage = () => {
     if (category) params.set("category", category);
     if (sortBy) params.set("sortBy", sortBy);
     setSearchParams(params);
-  };
-
-  const handlePageChange = (event, value) => {
-    const params = { page: value, limit: 12 };
-    if (searchQuery) params.q = searchQuery;
-    if (category) params.category = category;
-    if (sortBy) params.sortBy = sortBy;
-
-    if (category) {
-      dispatch(getSkillsByCategory(params));
-    } else {
-      dispatch(getAllSkills(params));
-    }
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   const clearFilters = () => {
@@ -101,7 +114,7 @@ const SkillsPage = () => {
     setCategory("");
     setSortBy("name");
     setSearchParams({});
-    dispatch(getAllSkills({ page: 1, limit: 12 }));
+    setCurrentPage(1);
   };
 
   const getCategoryColor = (category) => {
@@ -131,6 +144,13 @@ const SkillsPage = () => {
         <Typography variant="body1" color="text.secondary">
           Find skills to learn or offer to others
         </Typography>
+        {skills.length > 0 && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Showing {paginatedSkills.length} of {sortedSkills.length} skills
+            {sortedSkills.length !== skills.length &&
+              ` (filtered from ${skills.length} total)`}
+          </Typography>
+        )}
       </Box>
 
       {/* Error Display */}
@@ -185,7 +205,7 @@ const SkillsPage = () => {
                     >
                       <Star fontSize="small" color="primary" />
                       <Typography variant="body2" color="text.secondary">
-                        {skill.usageCount || 0} users
+                        {skill.userCount || 0} users
                       </Typography>
                     </Box>
                   </CardContent>
@@ -244,7 +264,7 @@ const SkillsPage = () => {
                     onChange={(e) => setSortBy(e.target.value)}
                   >
                     <MenuItem value="name">Name</MenuItem>
-                    <MenuItem value="usageCount">Most Popular</MenuItem>
+                    <MenuItem value="userCount">Most Popular</MenuItem>
                     <MenuItem value="createdAt">Newest</MenuItem>
                   </Select>
                 </FormControl>
@@ -274,10 +294,10 @@ const SkillsPage = () => {
       </Card>
 
       {/* Skills Grid */}
-      {skills.length > 0 ? (
+      {paginatedSkills.length > 0 ? (
         <>
           <Grid container spacing={3}>
-            {skills.map((skill) => (
+            {paginatedSkills.map((skill) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={skill._id}>
                 <Card
                   sx={{
@@ -332,7 +352,7 @@ const SkillsPage = () => {
                     >
                       <Star fontSize="small" color="primary" />
                       <Typography variant="body2" color="text.secondary">
-                        {skill.usageCount || 0} users
+                        {skill.userCount || 0} users
                       </Typography>
                     </Box>
 
@@ -351,12 +371,12 @@ const SkillsPage = () => {
           </Grid>
 
           {/* Pagination */}
-          {pagination.pages > 1 && (
+          {totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
               <Pagination
-                count={pagination.pages}
-                page={pagination.page}
-                onChange={handlePageChange}
+                count={totalPages}
+                page={currentPage}
+                onChange={(event, value) => setCurrentPage(value)}
                 color="primary"
                 size="large"
               />
@@ -366,10 +386,14 @@ const SkillsPage = () => {
       ) : (
         <Box sx={{ textAlign: "center", py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
-            No skills found
+            {sortedSkills.length === 0 && skills.length > 0
+              ? "No skills match your search criteria"
+              : "No skills found"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Try adjusting your search criteria
+            {sortedSkills.length === 0 && skills.length > 0
+              ? "Try adjusting your search criteria"
+              : "No skills are currently available"}
           </Typography>
         </Box>
       )}

@@ -149,6 +149,7 @@ class UserRepository {
       const skip = (page - 1) * limit;
       const searchQuery = {
         isBanned: false,
+        isPublic: true, // Only search public profiles
         $or: [
           { name: { $regex: query, $options: "i" } },
           { location: { $regex: query, $options: "i" } },

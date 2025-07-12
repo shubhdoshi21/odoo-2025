@@ -9,13 +9,17 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  InputBase,
   Badge,
   useTheme,
   useMediaQuery,
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
   Menu as MenuIcon,
   Notifications as NotificationsIcon,
   AccountCircle,
@@ -24,52 +28,12 @@ import {
   SwapHoriz,
   Star,
   Logout,
+  People,
+  School,
 } from "@mui/icons-material";
-import { styled, alpha } from "@mui/material/styles";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../../store/slices/authSlice";
-import { setSearchQuery } from "../../store/slices/uiSlice";
-
-// Styled search component
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(3),
-    width: "auto",
-  },
-}));
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "20ch",
-    },
-  },
-}));
 
 const Header = () => {
   const theme = useTheme();
@@ -82,7 +46,7 @@ const Header = () => {
   const { pendingSwaps } = useSelector((state) => state.swaps);
 
   const [anchorEl, setAnchorEl] = useState(null);
-  const [searchValue, setSearchValue] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -95,20 +59,18 @@ const Header = () => {
   const handleLogout = () => {
     dispatch(logoutUser());
     handleClose();
+    setMobileMenuOpen(false);
     navigate("/");
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchValue.trim()) {
-      dispatch(setSearchQuery(searchValue.trim()));
-      navigate(`/users?search=${encodeURIComponent(searchValue.trim())}`);
-    }
   };
 
   const handleNavigation = (path) => {
     navigate(path);
     handleClose();
+    setMobileMenuOpen(false);
+  };
+
+  const handleMobileMenuToggle = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
   };
 
   const pendingSwapsCount = pendingSwaps?.length || 0;
@@ -121,7 +83,7 @@ const Header = () => {
           variant="h6"
           component="div"
           sx={{
-            flexGrow: 0,
+            flexGrow: 1,
             cursor: "pointer",
             fontWeight: 700,
             color: "white",
@@ -132,30 +94,9 @@ const Header = () => {
           SkillSwap
         </Typography>
 
-        {/* Search Bar */}
+        {/* Navigation Links - Desktop */}
         {!isMobile && (
-          <Box
-            component="form"
-            onSubmit={handleSearch}
-            sx={{ flexGrow: 1, mx: 2 }}
-          >
-            <Search>
-              <SearchIconWrapper>
-                <SearchIcon />
-              </SearchIconWrapper>
-              <StyledInputBase
-                placeholder="Search users or skills..."
-                inputProps={{ "aria-label": "search" }}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-              />
-            </Search>
-          </Box>
-        )}
-
-        {/* Navigation Links */}
-        {!isMobile && (
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1, mr: 2 }}>
             <Button
               color="inherit"
               onClick={() => navigate("/users")}
@@ -299,12 +240,113 @@ const Header = () => {
               edge="end"
               color="inherit"
               aria-label="menu"
+              onClick={handleMobileMenuToggle}
             >
               <MenuIcon />
             </IconButton>
           )}
         </Box>
       </Toolbar>
+
+      {/* Mobile Navigation Drawer */}
+      <Drawer
+        anchor="right"
+        open={mobileMenuOpen}
+        onClose={handleMobileMenuToggle}
+        PaperProps={{
+          sx: { width: 280 },
+        }}
+      >
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Menu
+          </Typography>
+        </Box>
+        <Divider />
+
+        {/* Navigation Links */}
+        <List>
+          <ListItem button onClick={() => handleNavigation("/users")}>
+            <ListItemIcon>
+              <People />
+            </ListItemIcon>
+            <ListItemText primary="Users" />
+          </ListItem>
+          <ListItem button onClick={() => handleNavigation("/skills")}>
+            <ListItemIcon>
+              <School />
+            </ListItemIcon>
+            <ListItemText primary="Skills" />
+          </ListItem>
+        </List>
+
+        {/* User Menu Items */}
+        {isAuthenticated ? (
+          <>
+            <Divider />
+            <List>
+              <ListItem button onClick={() => handleNavigation("/dashboard")}>
+                <ListItemIcon>
+                  <Dashboard />
+                </ListItemIcon>
+                <ListItemText primary="Dashboard" />
+              </ListItem>
+              <ListItem button onClick={() => handleNavigation("/profile")}>
+                <ListItemIcon>
+                  <Person />
+                </ListItemIcon>
+                <ListItemText primary="Profile" />
+              </ListItem>
+              <ListItem button onClick={() => handleNavigation("/swaps")}>
+                <ListItemIcon>
+                  <SwapHoriz />
+                </ListItemIcon>
+                <ListItemText
+                  primary="My Swaps"
+                  secondary={
+                    pendingSwapsCount > 0
+                      ? `${pendingSwapsCount} pending`
+                      : undefined
+                  }
+                />
+              </ListItem>
+              <ListItem button onClick={() => handleNavigation("/feedback")}>
+                <ListItemIcon>
+                  <Star />
+                </ListItemIcon>
+                <ListItemText primary="Feedback" />
+              </ListItem>
+            </List>
+            <Divider />
+            <List>
+              <ListItem button onClick={handleLogout}>
+                <ListItemIcon>
+                  <Logout />
+                </ListItemIcon>
+                <ListItemText primary="Logout" />
+              </ListItem>
+            </List>
+          </>
+        ) : (
+          <>
+            <Divider />
+            <List>
+              <ListItem button onClick={() => handleNavigation("/login")}>
+                <ListItemIcon>
+                  <AccountCircle />
+                </ListItemIcon>
+                <ListItemText primary="Login" />
+              </ListItem>
+              <ListItem button onClick={() => handleNavigation("/register")}>
+                <ListItemIcon>
+                  <Person />
+                </ListItemIcon>
+                <ListItemText primary="Register" />
+              </ListItem>
+            </List>
+          </>
+        )}
+      </Drawer>
     </AppBar>
   );
 };
