@@ -15,6 +15,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Chip,
+  OutlinedInput,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
@@ -30,19 +32,25 @@ const RegisterPage = () => {
   );
 
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    bio: "",
     location: "",
     availability: [],
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+
+  const availabilityOptions = [
+    "Weekdays",
+    "Weekends",
+    "Evenings",
+    "Mornings",
+    "Afternoons",
+    "Flexible",
+  ];
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -72,16 +80,25 @@ const RegisterPage = () => {
     }
   };
 
+  const handleAvailabilityChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    setFormData((prev) => ({
+      ...prev,
+      availability: typeof value === "string" ? value.split(",") : value,
+    }));
+  };
+
   const validateForm = () => {
     const errors = {};
 
-    if (!formData.username) {
-      errors.username = "Username is required";
-    } else if (formData.username.length < 3) {
-      errors.username = "Username must be at least 3 characters";
-    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      errors.username =
-        "Username can only contain letters, numbers, and underscores";
+    if (!formData.name) {
+      errors.name = "Name is required";
+    } else if (formData.name.length < 2) {
+      errors.name = "Name must be at least 2 characters";
+    } else if (formData.name.length > 100) {
+      errors.name = "Name cannot exceed 100 characters";
     }
 
     if (!formData.email) {
@@ -92,11 +109,8 @@ const RegisterPage = () => {
 
     if (!formData.password) {
       errors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      errors.password = "Password must be at least 8 characters";
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      errors.password =
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+    } else if (formData.password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
     }
 
     if (!formData.confirmPassword) {
@@ -105,16 +119,8 @@ const RegisterPage = () => {
       errors.confirmPassword = "Passwords do not match";
     }
 
-    if (!formData.firstName) {
-      errors.firstName = "First name is required";
-    }
-
-    if (!formData.lastName) {
-      errors.lastName = "Last name is required";
-    }
-
-    if (formData.bio && formData.bio.length > 500) {
-      errors.bio = "Bio must be less than 500 characters";
+    if (formData.location && formData.location.length > 200) {
+      errors.location = "Location cannot exceed 200 characters";
     }
 
     setFormErrors(errors);
@@ -174,48 +180,18 @@ const RegisterPage = () => {
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="firstName"
-                  label="First Name"
-                  name="firstName"
-                  autoComplete="given-name"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  error={!!formErrors.firstName}
-                  helperText={formErrors.firstName}
-                  disabled={isLoading}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  id="lastName"
-                  label="Last Name"
-                  name="lastName"
-                  autoComplete="family-name"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  error={!!formErrors.lastName}
-                  helperText={formErrors.lastName}
-                  disabled={isLoading}
-                />
-              </Grid>
               <Grid item xs={12}>
                 <TextField
                   required
                   fullWidth
-                  id="username"
-                  label="Username"
-                  name="username"
-                  autoComplete="username"
-                  value={formData.username}
+                  id="name"
+                  label="Full Name"
+                  name="name"
+                  autoComplete="name"
+                  value={formData.name}
                   onChange={handleChange}
-                  error={!!formErrors.username}
-                  helperText={formErrors.username}
+                  error={!!formErrors.name}
+                  helperText={formErrors.name}
                   disabled={isLoading}
                 />
               </Grid>
@@ -310,21 +286,33 @@ const RegisterPage = () => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="bio"
-                  label="Bio (Optional)"
-                  name="bio"
-                  multiline
-                  rows={3}
-                  value={formData.bio}
-                  onChange={handleChange}
-                  error={!!formErrors.bio}
-                  helperText={
-                    formErrors.bio || `${formData.bio.length}/500 characters`
-                  }
-                  disabled={isLoading}
-                />
+                <FormControl fullWidth>
+                  <InputLabel id="availability-label">
+                    Availability (Optional)
+                  </InputLabel>
+                  <Select
+                    labelId="availability-label"
+                    id="availability"
+                    multiple
+                    value={formData.availability}
+                    onChange={handleAvailabilityChange}
+                    input={<OutlinedInput label="Availability (Optional)" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                    disabled={isLoading}
+                  >
+                    {availabilityOptions.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
             </Grid>
 

@@ -94,9 +94,12 @@ userSchema.virtual("profilePhotoUrl").get(function () {
   }/uploads/${this.profilePhoto}`;
 });
 
-// Index for search optimization
-userSchema.index({ isPublic: 1, offeredSkills: 1, wantedSkills: 1 });
+// Indexes for search optimization
+userSchema.index({ isPublic: 1 });
 userSchema.index({ isBanned: 1 });
+userSchema.index({ offeredSkills: 1 });
+userSchema.index({ wantedSkills: 1 });
+userSchema.index({ email: 1 });
 
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (next) {

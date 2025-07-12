@@ -153,7 +153,8 @@ const userSlice = createSlice({
       })
       .addCase(getTopRatedUsers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.topRatedUsers = action.payload.users;
+        state.topRatedUsers =
+          action.payload.data?.users || action.payload.users || [];
       })
       .addCase(getTopRatedUsers.rejected, (state, action) => {
         state.isLoading = false;
