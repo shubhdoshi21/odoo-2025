@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -20,6 +21,7 @@ import userService from '../services/userService';
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   //   useEffect(() => {
   //   dispatch({
@@ -76,15 +78,16 @@ const ProfilePage = () => {
       setOfferedSkills(extractSkillNames(currentUser.offeredSkills));
       setWantedSkills(extractSkillNames(currentUser.wantedSkills));
 
-      console.log("Profile photo URL:", currentUser.profilePhotoUrl);
-      console.log("Profile photo field:", currentUser.profilePhoto);
+      console.log('Profile photo URL:', currentUser.profilePhotoUrl);
+      console.log('Profile photo field:', currentUser.profilePhoto);
 
       if (currentUser.profilePhotoUrl) {
+        console.log('Profile photo URL:', currentUser.profilePhotoUrl);
         setPreviewPhoto(currentUser.profilePhotoUrl);
       } else if (currentUser.profilePhoto) {
-        // Fallback: construct URL manually if virtual not working
-        const photoUrl = `http://localhost:3001/api/profile-photo/${currentUser.profilePhoto}`;
-        console.log("Constructed photo URL:", photoUrl);
+        // Construct URL if only filename is available
+        const baseUrl = 'http://localhost:3001';
+        const photoUrl = `${baseUrl}/uploads/${currentUser.profilePhoto}`;
         setPreviewPhoto(photoUrl);
       }
     }
@@ -176,8 +179,8 @@ const ProfilePage = () => {
         });
         formData.append('profilePhoto', profilePhoto);
 
-        console.log("Sending FormData with file:", profilePhoto.name);
-        console.log("FormData contents:");
+        console.log('Sending FormData with file:', profilePhoto.name);
+        console.log('FormData contents:');
         for (let [key, value] of formData.entries()) {
           console.log(key, value);
         }
@@ -191,6 +194,9 @@ const ProfilePage = () => {
 
       // Clear the profile photo state after successful update
       setProfilePhoto(null);
+
+      // Navigate to home page after successful update
+      navigate('/');
     } catch (error) {
       console.error('Failed to update profile:', error);
     }
@@ -220,9 +226,16 @@ const ProfilePage = () => {
       {/* Profile Photo */}
       <Box display="flex" alignItems="center" mb={3}>
         <Avatar
-          src={`http://localhost:3001/uploads/${currentUser.profilePhoto}`}
+          src={previewPhoto}
           sx={{ width: 80, height: 80, mr: 2 }}
           alt="Profile"
+          onError={e => {
+            console.error('Failed to load profile photo:', previewPhoto);
+            console.error('Error event:', e);
+          }}
+          onLoad={() => {
+            console.log('Profile photo loaded successfully:', previewPhoto);
+          }}
         />
         <Button variant="contained" component="label">
           Upload Photo
@@ -247,15 +260,6 @@ const ProfilePage = () => {
         )}
         {uploading && <span style={{ marginLeft: 8 }}>Uploading...</span>}
       </Box>
-
-      {/* Debug info */}
-      {previewPhoto && (
-        <Box mb={2}>
-          <Typography variant="body2" color="textSecondary">
-            Debug: Image URL: {previewPhoto}
-          </Typography>
-        </Box>
-      )}
 
       {/* Name */}
       <TextField

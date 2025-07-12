@@ -199,7 +199,35 @@ class AuthService {
         "availability"
       );
 
-      // Convert skill names to IDs if they are provided as strings
+      // Parse skills if they come as JSON strings from FormData
+      if (safeUpdateData.offeredSkills && typeof safeUpdateData.offeredSkills === 'string') {
+        try {
+          safeUpdateData.offeredSkills = JSON.parse(safeUpdateData.offeredSkills);
+        } catch (error) {
+          console.error('Error parsing offeredSkills:', error);
+          safeUpdateData.offeredSkills = [];
+        }
+      }
+
+      if (safeUpdateData.wantedSkills && typeof safeUpdateData.wantedSkills === 'string') {
+        try {
+          safeUpdateData.wantedSkills = JSON.parse(safeUpdateData.wantedSkills);
+        } catch (error) {
+          console.error('Error parsing wantedSkills:', error);
+          safeUpdateData.wantedSkills = [];
+        }
+      }
+
+      if (safeUpdateData.availability && typeof safeUpdateData.availability === 'string') {
+        try {
+          safeUpdateData.availability = JSON.parse(safeUpdateData.availability);
+        } catch (error) {
+          console.error('Error parsing availability:', error);
+          safeUpdateData.availability = [];
+        }
+      }
+
+      // Convert skill names to IDs if they are provided as arrays
       if (
         safeUpdateData.offeredSkills &&
         Array.isArray(safeUpdateData.offeredSkills)

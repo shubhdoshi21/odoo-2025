@@ -91,7 +91,7 @@ userSchema.virtual("profilePhotoUrl").get(function () {
   if (!this.profilePhoto) return null;
   return `${
     process.env.BASE_URL || "http://localhost:3001"
-  }/api/profile-photo/${this.profilePhoto}`;
+  }/uploads/${this.profilePhoto}`;
 });
 
 // Indexes for search optimization

@@ -9,48 +9,54 @@ const fs = require("fs");
 require("dotenv").config();
 
 // Import routes
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/users");
-const skillRoutes = require("./routes/skills");
-const swapRoutes = require("./routes/swaps");
-const feedbackRoutes = require("./routes/feedback");
-const adminRoutes = require("./routes/admin");
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const skillRoutes = require('./routes/skills');
+const swapRoutes = require('./routes/swaps');
+const feedbackRoutes = require('./routes/feedback');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 3001;
 
-// Security middleware - temporarily disable CSP for debugging
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-  })
-);
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "blob:", "http://localhost:3001"],
+    },
+  },
+}));
 
 app.use(cookieParser());
 
 // CORS configuration
 const corsOptions = {
-  origin: ["http://localhost:3000"],
+  origin: ['http://localhost:3000'],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "Accept",
-    "Origin",
-    "X-Requested-With",
+    'Content-Type',
+    'Authorization',
+    'Accept',
+    'Origin',
+    'X-Requested-With',
   ],
-  exposedHeaders: ["Set-Cookie"],
+  exposedHeaders: ['Set-Cookie'],
 };
 app.use(cors(corsOptions));
 
 // Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Logging middleware
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
 }
 
 // Static files with CORS headers
@@ -85,27 +91,27 @@ app.get("/api/profile-photo/:filename", (req, res) => {
 });
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get('/health', (req, res) => {
   res.status(200).json({
-    status: "OK",
-    message: "Skill Swap Platform API is running",
+    status: 'OK',
+    message: 'Skill Swap Platform API is running',
     timestamp: new Date().toISOString(),
   });
 });
 
 // API routes
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/skills", skillRoutes);
-app.use("/api/swaps", swapRoutes);
-app.use("/api/feedback", feedbackRoutes);
-app.use("/api/admin", adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/skills', skillRoutes);
+app.use('/api/swaps', swapRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 handler
-app.use("*", (req, res) => {
+app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
-    message: "Route not found",
+    message: 'Route not found',
   });
 });
 
@@ -114,12 +120,12 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
 
   const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+  const message = err.message || 'Internal Server Error';
 
   res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
@@ -127,22 +133,22 @@ app.use((err, req, res, next) => {
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log("✅ Connected to MongoDB");
+    console.log('✅ Connected to MongoDB');
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV}`);
     });
   })
-  .catch((error) => {
-    console.error("❌ MongoDB connection error:", error);
+  .catch(error => {
+    console.error('❌ MongoDB connection error:', error);
     process.exit(1);
   });
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received, shutting down gracefully");
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
   mongoose.connection.close(() => {
-    console.log("MongoDB connection closed");
+    console.log('MongoDB connection closed');
     process.exit(0);
   });
 });
