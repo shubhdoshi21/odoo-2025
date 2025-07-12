@@ -131,8 +131,14 @@ const userSlice = createSlice({
       })
       .addCase(getAllUsers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.users = action.payload.users;
-        state.pagination = action.payload.pagination;
+        state.users = action.payload.data?.users || action.payload.users || [];
+        state.pagination = action.payload.data?.pagination ||
+          action.payload.pagination || {
+            page: 1,
+            limit: 10,
+            total: 0,
+            pages: 0,
+          };
       })
       .addCase(getAllUsers.rejected, (state, action) => {
         state.isLoading = false;
@@ -145,8 +151,14 @@ const userSlice = createSlice({
       })
       .addCase(searchUsers.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.users = action.payload.users;
-        state.pagination = action.payload.pagination;
+        state.users = action.payload.data?.users || action.payload.users || [];
+        state.pagination = action.payload.data?.pagination ||
+          action.payload.pagination || {
+            page: 1,
+            limit: 10,
+            total: 0,
+            pages: 0,
+          };
       })
       .addCase(searchUsers.rejected, (state, action) => {
         state.isLoading = false;
@@ -173,7 +185,7 @@ const userSlice = createSlice({
       })
       .addCase(getUserById.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.currentUser = action.payload.user;
+        state.currentUser = action.payload.data?.user || action.payload.user;
       })
       .addCase(getUserById.rejected, (state, action) => {
         state.isLoading = false;
@@ -186,8 +198,14 @@ const userSlice = createSlice({
       })
       .addCase(getUsersBySkill.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.users = action.payload.users;
-        state.pagination = action.payload.pagination;
+        state.users = action.payload.data?.users || action.payload.users || [];
+        state.pagination = action.payload.data?.pagination ||
+          action.payload.pagination || {
+            page: 1,
+            limit: 10,
+            total: 0,
+            pages: 0,
+          };
       })
       .addCase(getUsersBySkill.rejected, (state, action) => {
         state.isLoading = false;

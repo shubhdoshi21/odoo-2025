@@ -10,38 +10,38 @@ import {
   Switch,
   Chip,
   Grid,
+  Alert,
 } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserById } from "../store/slices/userSlice"; // Adjust path as needed
+import { getUserById } from "../store/slices/userSlice";
+import { updateProfile } from "../store/slices/authSlice";
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
 
-//   useEffect(() => {
-//   dispatch({
-//     type: "users/getUserById/fulfilled", // mock success action
-//     payload: {
-//       user: {
-//         id: "dummy123",
-//         name: "Test User",
-//         location: "Testville",
-//         isPublic: true,
-//         offeredSkills: ["React", "Node.js"],
-//         wantedSkills: ["Go", "Rust"],
-//         profilePhotoUrl: "", // optional
-//         availability: ["Evenings", "Weekends"],
-//       },
-//     },
-//   });
-// }, [dispatch]);
+  //   useEffect(() => {
+  //   dispatch({
+  //     type: "users/getUserById/fulfilled", // mock success action
+  //     payload: {
+  //       user: {
+  //         id: "dummy123",
+  //         name: "Test User",
+  //         location: "Testville",
+  //         isPublic: true,
+  //         offeredSkills: ["React", "Node.js"],
+  //         wantedSkills: ["Go", "Rust"],
+  //         profilePhotoUrl: "", // optional
+  //         availability: ["Evenings", "Weekends"],
+  //       },
+  //     },
+  //   });
+  // }, [dispatch]);
 
-  // Replace with actual logic to get the logged-in user's ID (from auth)
-  const loggedInUserId = useSelector((state) => state.auth.user?.id);
-
-  // Redux store data
-  const currentUser = useSelector((state) => state.users.currentUser);
-  const isLoading = useSelector((state) => state.users.isLoading);
+  // Get user data from auth slice (current logged-in user)
+  const currentUser = useSelector((state) => state.auth.user);
+  const isLoading = useSelector((state) => state.auth.isLoading);
+  const error = useSelector((state) => state.auth.error);
 
   // Local UI state
   const [name, setName] = useState("");
@@ -54,23 +54,35 @@ const ProfilePage = () => {
   const [newOfferedSkill, setNewOfferedSkill] = useState("");
   const [newWantedSkill, setNewWantedSkill] = useState("");
 
-  useEffect(() => {
-    if (loggedInUserId) {
-      dispatch(getUserById(loggedInUserId));
-    }
-  }, [dispatch, loggedInUserId]);
-
+  // Load profile data when component mounts
   useEffect(() => {
     if (currentUser) {
       setName(currentUser.name || "");
       setLocation(currentUser.location || "");
-      setIsPublic(currentUser.isPublic);
-      setOfferedSkills(currentUser.offeredSkills || []);
-      setWantedSkills(currentUser.wantedSkills || []);
+      setIsPublic(
+        currentUser.isPublic !== undefined ? currentUser.isPublic : true
+      );
+
+      // Handle skills - they can be objects with _id and name, or just strings
+      const extractSkillNames = (skills) => {
+        if (!skills || !Array.isArray(skills)) return [];
+        return skills.map((skill) =>
+          typeof skill === "string" ? skill : skill.name
+        );
+      };
+
+      setOfferedSkills(extractSkillNames(currentUser.offeredSkills));
+      setWantedSkills(extractSkillNames(currentUser.wantedSkills));
+
       if (currentUser.profilePhotoUrl) {
         setPreviewPhoto(currentUser.profilePhotoUrl);
       }
     }
+  }, [currentUser]);
+
+  // Debug log to see current user data
+  useEffect(() => {
+    console.log("Current user data:", currentUser);
   }, [currentUser]);
 
   const handleImageUpload = (e) => {
@@ -91,7 +103,9 @@ const ProfilePage = () => {
 
   const handleAddSkill = (e, type) => {
     e.preventDefault();
-    const skill = (type === "offered" ? newOfferedSkill : newWantedSkill).trim();
+    const skill = (
+      type === "offered" ? newOfferedSkill : newWantedSkill
+    ).trim();
     if (!skill) return;
 
     if (type === "offered" && !offeredSkills.includes(skill)) {
@@ -105,19 +119,48 @@ const ProfilePage = () => {
     }
   };
 
-  const handleSubmit = () => {
-    // Call update API with edited values
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("location", location);
-    formData.append("isPublic", isPublic);
-    formData.append("offeredSkills", JSON.stringify(offeredSkills));
-    formData.append("wantedSkills", JSON.stringify(wantedSkills));
-    formData.append("availability", JSON.stringify(currentUser.availability || []));
-    if (profilePhoto) formData.append("profilePhoto", profilePhoto);
+  const handleSubmit = async () => {
+    try {
+      const profileData = {
+        name,
+        location,
+        isPublic,
+        offeredSkills,
+        wantedSkills,
+        availability: currentUser?.availability || [],
+      };
 
-    // Example: userService.updateUserProfile(loggedInUserId, formData);
-    console.log("Submitting:", Object.fromEntries(formData));
+      console.log("Submitting profile data:", profileData);
+
+      // If there's a new profile photo, add it to FormData
+      if (profilePhoto) {
+        const formData = new FormData();
+        Object.keys(profileData).forEach((key) => {
+          if (
+            key === "offeredSkills" ||
+            key === "wantedSkills" ||
+            key === "availability"
+          ) {
+            formData.append(key, JSON.stringify(profileData[key]));
+          } else {
+            formData.append(key, profileData[key]);
+          }
+        });
+        formData.append("profilePhoto", profilePhoto);
+
+        console.log("Sending FormData with file");
+        await dispatch(updateProfile(formData)).unwrap();
+      } else {
+        // Send as JSON if no file upload
+        console.log("Sending JSON data");
+        await dispatch(updateProfile(profileData)).unwrap();
+      }
+
+      // Clear the profile photo state after successful update
+      setProfilePhoto(null);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
   };
 
   if (isLoading || !currentUser) {
@@ -134,6 +177,13 @@ const ProfilePage = () => {
         Edit Profile
       </Typography>
 
+      {/* Error Display */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* Profile Photo */}
       <Box display="flex" alignItems="center" mb={3}>
         <Avatar
@@ -143,7 +193,12 @@ const ProfilePage = () => {
         />
         <Button variant="contained" component="label">
           Upload Photo
-          <input hidden type="file" accept="image/*" onChange={handleImageUpload} />
+          <input
+            hidden
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+          />
         </Button>
         {profilePhoto && (
           <Button
@@ -202,7 +257,11 @@ const ProfilePage = () => {
             </Grid>
           ))}
         </Grid>
-        <Box component="form" onSubmit={(e) => handleAddSkill(e, "offered")} mt={2}>
+        <Box
+          component="form"
+          onSubmit={(e) => handleAddSkill(e, "offered")}
+          mt={2}
+        >
           <TextField
             label="Add Offered Skill"
             value={newOfferedSkill}
@@ -226,7 +285,11 @@ const ProfilePage = () => {
             </Grid>
           ))}
         </Grid>
-        <Box component="form" onSubmit={(e) => handleAddSkill(e, "wanted")} mt={2}>
+        <Box
+          component="form"
+          onSubmit={(e) => handleAddSkill(e, "wanted")}
+          mt={2}
+        >
           <TextField
             label="Add Wanted Skill"
             value={newWantedSkill}
@@ -238,8 +301,13 @@ const ProfilePage = () => {
 
       {/* Submit */}
       <Box mt={4}>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
-          Save Profile
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? "Saving..." : "Save Profile"}
         </Button>
       </Box>
     </Container>

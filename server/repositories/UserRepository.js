@@ -14,7 +14,10 @@ class UserRepository {
   // Find user by ID
   async findById(id) {
     try {
-      return await User.findById(id).select("-password");
+      return await User.findById(id)
+        .populate("offeredSkills", "name category")
+        .populate("wantedSkills", "name category")
+        .select("-password");
     } catch (error) {
       throw error;
     }
@@ -46,7 +49,10 @@ class UserRepository {
       return await User.findByIdAndUpdate(id, updateData, {
         new: true,
         runValidators: true,
-      }).select("-password");
+      })
+        .populate("offeredSkills", "name category")
+        .populate("wantedSkills", "name category")
+        .select("-password");
     } catch (error) {
       throw error;
     }
