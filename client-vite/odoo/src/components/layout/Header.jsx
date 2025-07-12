@@ -28,7 +28,7 @@ import {
 import { styled, alpha } from "@mui/material/styles";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../../store/slices/authSlice";
+import { logoutUser } from "../../store/slices/authSlice";
 import { setSearchQuery } from "../../store/slices/uiSlice";
 
 // Styled search component
@@ -93,7 +93,7 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(logoutUser());
     handleClose();
     navigate("/");
   };

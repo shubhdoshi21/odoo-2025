@@ -50,6 +50,7 @@ class AuthService {
     try {
       // Find user with password
       const user = await UserRepository.findByEmailWithPassword(email);
+
       if (!user) {
         throw new Error("Invalid credentials");
       }
@@ -61,6 +62,7 @@ class AuthService {
 
       // Check password
       const isPasswordValid = await user.comparePassword(password);
+
       if (!isPasswordValid) {
         throw new Error("Invalid credentials");
       }

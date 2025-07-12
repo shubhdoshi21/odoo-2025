@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import authService from "../../services/authService";
+import { setCurrentUser, clearCurrentUser } from "./userSlice";
 
 // Get user from localStorage
 const user = JSON.parse(localStorage.getItem("user"));
@@ -18,6 +19,8 @@ export const register = createAsyncThunk(
   async (userData, thunkAPI) => {
     try {
       const response = await authService.register(userData);
+      // Also set the current user in the user slice
+      thunkAPI.dispatch(setCurrentUser(response.data.data.user));
       return response.data;
     } catch (error) {
       const message =
@@ -32,6 +35,8 @@ export const login = createAsyncThunk(
   async (credentials, thunkAPI) => {
     try {
       const response = await authService.login(credentials);
+      // Also set the current user in the user slice
+      thunkAPI.dispatch(setCurrentUser(response.data.data.user));
       return response.data;
     } catch (error) {
       const message =
@@ -46,6 +51,8 @@ export const getProfile = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const response = await authService.getProfile();
+      // Also set the current user in the user slice
+      thunkAPI.dispatch(setCurrentUser(response.data.data.user));
       return response.data;
     } catch (error) {
       const message =
@@ -62,6 +69,8 @@ export const updateProfile = createAsyncThunk(
   async (profileData, thunkAPI) => {
     try {
       const response = await authService.updateProfile(profileData);
+      // Also set the current user in the user slice
+      thunkAPI.dispatch(setCurrentUser(response.data.data.user));
       return response.data;
     } catch (error) {
       const message =
@@ -126,6 +135,8 @@ export const deleteAccount = createAsyncThunk(
   async (password, thunkAPI) => {
     try {
       const response = await authService.deleteAccount(password);
+      // Also clear the current user from the user slice
+      thunkAPI.dispatch(clearCurrentUser());
       return response.data;
     } catch (error) {
       const message =
@@ -134,6 +145,16 @@ export const deleteAccount = createAsyncThunk(
         "Failed to delete account";
       return thunkAPI.rejectWithValue(message);
     }
+  }
+);
+
+export const logoutUser = createAsyncThunk(
+  "auth/logoutUser",
+  async (_, thunkAPI) => {
+    // Clear current user from user slice
+    thunkAPI.dispatch(clearCurrentUser());
+    // Return empty data to trigger the fulfilled case
+    return {};
   }
 );
 
@@ -273,6 +294,15 @@ const authSlice = createSlice({
       .addCase(deleteAccount.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      // Logout User
+      .addCase(logoutUser.fulfilled, (state) => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.error = null;
       });
   },
 });
