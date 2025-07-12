@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -13,7 +13,7 @@ import {
   Badge,
   useTheme,
   useMediaQuery,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Search as SearchIcon,
   Menu as MenuIcon,
@@ -24,67 +24,67 @@ import {
   SwapHoriz,
   Star,
   Logout,
-} from "@mui/icons-material";
-import { styled, alpha } from "@mui/material/styles";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { logoutUser } from "../../store/slices/authSlice";
-import { setSearchQuery } from "../../store/slices/uiSlice";
+} from '@mui/icons-material';
+import { styled, alpha } from '@mui/material/styles';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../../store/slices/authSlice';
+import { setSearchQuery } from '../../store/slices/uiSlice';
 
 // Styled search component
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
+const Search = styled('div')(({ theme }) => ({
+  position: 'relative',
   borderRadius: theme.shape.borderRadius,
   backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
+  '&:hover': {
     backgroundColor: alpha(theme.palette.common.white, 0.25),
   },
   marginRight: theme.spacing(2),
   marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
+  width: '100%',
+  [theme.breakpoints.up('sm')]: {
     marginLeft: theme.spacing(3),
-    width: "auto",
+    width: 'auto',
   },
 }));
 
-const SearchIconWrapper = styled("div")(({ theme }) => ({
+const SearchIconWrapper = styled('div')(({ theme }) => ({
   padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
+  height: '100%',
+  position: 'absolute',
+  pointerEvents: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  "& .MuiInputBase-input": {
+  color: 'inherit',
+  '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "20ch",
+    transition: theme.transitions.create('width'),
+    width: '100%',
+    [theme.breakpoints.up('md')]: {
+      width: '20ch',
     },
   },
 }));
 
 const Header = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
 
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
-  const { pendingSwaps } = useSelector((state) => state.swaps);
+  const { isAuthenticated, user } = useSelector(state => state.auth);
+  const { pendingSwaps } = useSelector(state => state.swaps);
 
   const [anchorEl, setAnchorEl] = useState(null);
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState('');
 
-  const handleMenu = (event) => {
+  const handleMenu = event => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -95,10 +95,10 @@ const Header = () => {
   const handleLogout = () => {
     dispatch(logoutUser());
     handleClose();
-    navigate("/");
+    navigate('/');
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = e => {
     e.preventDefault();
     if (searchValue.trim()) {
       dispatch(setSearchQuery(searchValue.trim()));
@@ -106,7 +106,7 @@ const Header = () => {
     }
   };
 
-  const handleNavigation = (path) => {
+  const handleNavigation = path => {
     navigate(path);
     handleClose();
   };
@@ -122,12 +122,12 @@ const Header = () => {
           component="div"
           sx={{
             flexGrow: 0,
-            cursor: "pointer",
+            cursor: 'pointer',
             fontWeight: 700,
-            color: "white",
-            textDecoration: "none",
+            color: 'white',
+            textDecoration: 'none',
           }}
-          onClick={() => navigate("/")}
+          onClick={() => navigate('/')}
         >
           SkillSwap
         </Typography>
@@ -145,9 +145,9 @@ const Header = () => {
               </SearchIconWrapper>
               <StyledInputBase
                 placeholder="Search users or skills..."
-                inputProps={{ "aria-label": "search" }}
+                inputProps={{ 'aria-label': 'search' }}
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+                onChange={e => setSearchValue(e.target.value)}
               />
             </Search>
           </Box>
@@ -155,27 +155,27 @@ const Header = () => {
 
         {/* Navigation Links */}
         {!isMobile && (
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               color="inherit"
-              onClick={() => navigate("/users")}
+              onClick={() => navigate('/users')}
               sx={{
                 backgroundColor:
-                  location.pathname === "/users"
-                    ? "rgba(255,255,255,0.1)"
-                    : "transparent",
+                  location.pathname === '/users'
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'transparent',
               }}
             >
               Users
             </Button>
             <Button
               color="inherit"
-              onClick={() => navigate("/skills")}
+              onClick={() => navigate('/skills')}
               sx={{
                 backgroundColor:
-                  location.pathname === "/skills"
-                    ? "rgba(255,255,255,0.1)"
-                    : "transparent",
+                  location.pathname === '/skills'
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'transparent',
               }}
             >
               Skills
@@ -184,14 +184,14 @@ const Header = () => {
         )}
 
         {/* User Menu */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {isAuthenticated ? (
             <>
               {/* Notifications */}
               <IconButton
                 color="inherit"
-                onClick={() => navigate("/swaps")}
-                sx={{ position: "relative" }}
+                onClick={() => navigate('/swaps')}
+                sx={{ position: 'relative' }}
               >
                 <Badge badgeContent={pendingSwapsCount} color="error">
                   <NotificationsIcon />
@@ -207,10 +207,15 @@ const Header = () => {
                 onClick={handleMenu}
                 color="inherit"
               >
-                {user?.profilePicture ? (
+                {user?.profilePhotoUrl || user?.profilePhoto ? (
                   <Avatar
-                    src={user.profilePicture}
-                    alt={user.username}
+                    src={
+                      user.profilePhotoUrl ||
+                      (user.profilePhoto
+                        ? `http://localhost:3001/uploads/${user.profilePhoto}`
+                        : null)
+                    }
+                    alt={user.name || user.username}
                     sx={{ width: 32, height: 32 }}
                   />
                 ) : (
@@ -222,26 +227,26 @@ const Header = () => {
                 id="menu-appbar"
                 anchorEl={anchorEl}
                 anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "right",
+                  vertical: 'bottom',
+                  horizontal: 'right',
                 }}
                 keepMounted
                 transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
+                  vertical: 'top',
+                  horizontal: 'right',
                 }}
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
               >
-                <MenuItem onClick={() => handleNavigation("/dashboard")}>
+                <MenuItem onClick={() => handleNavigation('/dashboard')}>
                   <Dashboard sx={{ mr: 1 }} />
                   Dashboard
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigation("/profile")}>
+                <MenuItem onClick={() => handleNavigation('/profile')}>
                   <Person sx={{ mr: 1 }} />
                   Profile
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigation("/swaps")}>
+                <MenuItem onClick={() => handleNavigation('/swaps')}>
                   <SwapHoriz sx={{ mr: 1 }} />
                   My Swaps
                   {pendingSwapsCount > 0 && (
@@ -252,7 +257,7 @@ const Header = () => {
                     />
                   )}
                 </MenuItem>
-                <MenuItem onClick={() => handleNavigation("/feedback")}>
+                <MenuItem onClick={() => handleNavigation('/feedback')}>
                   <Star sx={{ mr: 1 }} />
                   Feedback
                 </MenuItem>
@@ -266,12 +271,12 @@ const Header = () => {
             <>
               <Button
                 color="inherit"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate('/login')}
                 sx={{
                   backgroundColor:
-                    location.pathname === "/login"
-                      ? "rgba(255,255,255,0.1)"
-                      : "transparent",
+                    location.pathname === '/login'
+                      ? 'rgba(255,255,255,0.1)'
+                      : 'transparent',
                 }}
               >
                 Login
@@ -279,12 +284,12 @@ const Header = () => {
               <Button
                 variant="contained"
                 color="secondary"
-                onClick={() => navigate("/register")}
+                onClick={() => navigate('/register')}
                 sx={{
                   backgroundColor:
-                    location.pathname === "/register"
-                      ? "rgba(255,255,255,0.1)"
-                      : "transparent",
+                    location.pathname === '/register'
+                      ? 'rgba(255,255,255,0.1)'
+                      : 'transparent',
                 }}
               >
                 Register
