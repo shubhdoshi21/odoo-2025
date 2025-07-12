@@ -224,7 +224,7 @@ const HomePage = () => {
           </Typography>
 
           <Grid container spacing={3}>
-            {popularSkills.slice(0, 6).map((skill) => (
+            {(popularSkills || []).slice(0, 6).map((skill) => (
               <Grid item xs={12} sm={6} md={4} key={skill._id}>
                 <Card sx={{ height: "100%" }}>
                   <CardContent>
@@ -285,7 +285,7 @@ const HomePage = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          {topRatedUsers.slice(0, 6).map((user) => (
+          {(topRatedUsers || []).slice(0, 6).map((user) => (
             <Grid item xs={12} sm={6} md={4} key={user._id}>
               <Card sx={{ height: "100%" }}>
                 <CardContent sx={{ textAlign: "center" }}>

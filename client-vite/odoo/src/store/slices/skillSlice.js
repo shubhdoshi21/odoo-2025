@@ -152,7 +152,8 @@ const skillSlice = createSlice({
       })
       .addCase(getPopularSkills.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.popularSkills = action.payload.skills;
+        state.popularSkills =
+          action.payload.data?.skills || action.payload.skills || [];
       })
       .addCase(getPopularSkills.rejected, (state, action) => {
         state.isLoading = false;
