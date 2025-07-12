@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const UserRepository = require("../repositories/UserRepository");
+const SkillRepository = require("../repositories/SkillRepository");
 const { generateToken } = require("../middleware/auth");
 
 class AuthService {
@@ -130,11 +131,61 @@ class AuthService {
     }
   }
 
+  // Helper method to convert skill names to IDs
+  async convertSkillNamesToIds(skillNames) {
+    if (!skillNames || !Array.isArray(skillNames)) {
+      return [];
+    }
+
+    const skillIds = [];
+    for (const skillName of skillNames) {
+      try {
+        // Try to find existing skill by name
+        let skill = await SkillRepository.findByName(skillName);
+
+        if (!skill) {
+          // Create new skill if it doesn't exist
+          skill = await SkillRepository.create({
+            name: skillName,
+            category: "Other", // Default category
+            createdByAdmin: false,
+          });
+        }
+
+        skillIds.push(skill._id);
+      } catch (error) {
+        console.error(`Error processing skill "${skillName}":`, error);
+        // Continue with other skills even if one fails
+      }
+    }
+
+    return skillIds;
+  }
+
   // Update user profile
   async updateProfile(userId, updateData) {
     try {
       // Remove sensitive fields from update data
       const { password, email, ...safeUpdateData } = updateData;
+
+      // Convert skill names to IDs if they are provided as strings
+      if (
+        safeUpdateData.offeredSkills &&
+        Array.isArray(safeUpdateData.offeredSkills)
+      ) {
+        safeUpdateData.offeredSkills = await this.convertSkillNamesToIds(
+          safeUpdateData.offeredSkills
+        );
+      }
+
+      if (
+        safeUpdateData.wantedSkills &&
+        Array.isArray(safeUpdateData.wantedSkills)
+      ) {
+        safeUpdateData.wantedSkills = await this.convertSkillNamesToIds(
+          safeUpdateData.wantedSkills
+        );
+      }
 
       const updatedUser = await UserRepository.update(userId, safeUpdateData);
       if (!updatedUser) {
