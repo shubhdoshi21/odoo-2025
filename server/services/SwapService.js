@@ -48,38 +48,48 @@ class SwapService {
   // Create new swap
   static async createSwap(swapData) {
     try {
+      // Map field names to match the Swap model expectations
+      const mappedData = {
+        requester: swapData.requesterId, // Already set by controller
+        responder: swapData.responder, // The user being requested from
+        requestedSkill: swapData.requestedSkill, // The skill being requested
+        offeredSkill: swapData.offeredSkill, // The skill being offered
+        message: swapData.message,
+        scheduledDate: swapData.scheduledDate,
+      };
+
       // Validate required fields
       if (
-        !swapData.requesterId ||
-        !swapData.providerId ||
-        !swapData.requestedSkillId ||
-        !swapData.offeredSkillId
+        !mappedData.requester ||
+        !mappedData.responder ||
+        !mappedData.requestedSkill ||
+        !mappedData.offeredSkill
       ) {
         throw new Error(
-          "Requester, provider, requested skill, and offered skill are required"
+          "Requester, responder, requested skill, and offered skill are required"
         );
       }
 
-      // Check if requester and provider are different users
-      if (swapData.requesterId === swapData.providerId) {
-        throw new Error("Requester and provider cannot be the same user");
+      // Check if requester and responder are different users
+      if (mappedData.requester === mappedData.responder) {
+        throw new Error("Requester and responder cannot be the same user");
       }
 
       // Check if requester exists
-      const requester = await UserRepository.findById(swapData.requesterId);
+      const requester = await UserRepository.findById(mappedData.requester);
       if (!requester) {
         throw new Error("Requester not found");
       }
 
-      // Check if provider exists
-      const provider = await UserRepository.findById(swapData.providerId);
-      if (!provider) {
-        throw new Error("Provider not found");
+      // Check if responder exists
+      const responder = await UserRepository.findById(mappedData.responder);
+      if (!responder) {
+        throw new Error("Responder not found");
       }
 
       // Check if requested skill exists
       const requestedSkill = await SkillRepository.findById(
-        swapData.requestedSkillId
+        mappedData.requestedSkill
       );
       if (!requestedSkill) {
         throw new Error("Requested skill not found");
@@ -87,26 +97,32 @@ class SwapService {
 
       // Check if offered skill exists
       const offeredSkill = await SkillRepository.findById(
-        swapData.offeredSkillId
+        mappedData.offeredSkill
       );
       if (!offeredSkill) {
         throw new Error("Offered skill not found");
       }
 
-      // Check if provider has the requested skill
-      if (!provider.skills.includes(swapData.requestedSkillId)) {
-        throw new Error("Provider does not have the requested skill");
+      // Check if responder has the requested skill (using offeredSkills field)
+      const responderHasRequestedSkill = responder.offeredSkills.some(
+        (skill) => skill._id.toString() === mappedData.requestedSkill.toString()
+      );
+      if (!responderHasRequestedSkill) {
+        throw new Error("Responder does not have the requested skill");
       }
 
-      // Check if requester has the offered skill
-      if (!requester.skills.includes(swapData.offeredSkillId)) {
+      // Check if requester has the offered skill (using offeredSkills field)
+      const requesterHasOfferedSkill = requester.offeredSkills.some(
+        (skill) => skill._id.toString() === mappedData.offeredSkill.toString()
+      );
+      if (!requesterHasOfferedSkill) {
         throw new Error("Requester does not have the offered skill");
       }
 
       // Check if there's already a pending or accepted swap between these users
       const canCreate = await SwapRepository.canCreateSwap(
-        swapData.requesterId,
-        swapData.providerId
+        mappedData.requester,
+        mappedData.responder
       );
       if (!canCreate) {
         throw new Error(
@@ -114,7 +130,7 @@ class SwapService {
         );
       }
 
-      const swap = await SwapRepository.create(swapData);
+      const swap = await SwapRepository.create(mappedData);
       return swap;
     } catch (error) {
       throw new Error(`Error creating swap: ${error.message}`);
