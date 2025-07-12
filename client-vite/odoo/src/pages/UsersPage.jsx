@@ -38,12 +38,16 @@ const UsersPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { users, pagination, isLoading } = useSelector(state => state.users);
+  const { user: currentUser } = useSelector(state => state.auth);
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [location, setLocation] = useState(searchParams.get('location') || '');
   const [availability, setAvailability] = useState(
     searchParams.get('availability') || '',
   );
+
+  // Filter out current user from the users list
+  const filteredUsers = users.filter(user => user._id !== currentUser?._id);
 
   // Load users on component mount
   useEffect(() => {
@@ -189,10 +193,10 @@ const UsersPage = () => {
       </Card>
 
       {/* Users Grid */}
-      {users.length > 0 ? (
+      {filteredUsers.length > 0 ? (
         <>
           <Grid container spacing={3}>
-            {users.map(user => (
+            {filteredUsers.map(user => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={user._id}>
                 <Card
                   sx={{
