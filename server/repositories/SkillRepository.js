@@ -1,76 +1,63 @@
 const Skill = require("../models/Skill");
+const Swap = require("../models/Swap");
 
 class SkillRepository {
-  // Create a new skill
-  async create(skillData) {
+  // Create new skill
+  static async create(skillData) {
     try {
       const skill = new Skill(skillData);
       return await skill.save();
     } catch (error) {
-      throw error;
+      throw new Error(`Error creating skill: ${error.message}`);
     }
   }
 
   // Find skill by ID
-  async findById(id) {
+  static async findById(skillId) {
     try {
-      return await Skill.findById(id);
+      return await Skill.findById(skillId).exec();
     } catch (error) {
-      throw error;
+      throw new Error(`Error finding skill: ${error.message}`);
     }
   }
 
   // Find skill by name
-  async findByName(name) {
+  static async findByName(name) {
     try {
-      return await Skill.findOne({ name: name.toLowerCase() });
+      return await Skill.findOne({
+        name: { $regex: new RegExp(`^${name}$`, "i") },
+      }).exec();
     } catch (error) {
-      throw error;
+      throw new Error(`Error finding skill by name: ${error.message}`);
     }
   }
 
-  // Update skill
-  async update(id, updateData) {
+  // Get all skills with pagination and filters
+  static async getAllSkills(options = {}) {
     try {
-      return await Skill.findByIdAndUpdate(id, updateData, {
-        new: true,
-        runValidators: true,
-      });
-    } catch (error) {
-      throw error;
-    }
-  }
+      const {
+        page = 1,
+        limit = 10,
+        filters = {},
+        sortBy = "name",
+        sortOrder = "asc",
+      } = options;
 
-  // Delete skill
-  async delete(id) {
-    try {
-      return await Skill.findByIdAndDelete(id);
-    } catch (error) {
-      throw error;
-    }
-  }
+      const query = Skill.find(filters);
 
-  // Find all skills with pagination
-  async findAll(page = 1, limit = 10, filters = {}) {
-    try {
+      const sortOptions = {};
+      sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+      query.sort(sortOptions);
+
       const skip = (page - 1) * limit;
-      const query = { isActive: true };
+      query.skip(skip).limit(limit);
 
-      // Apply filters
-      if (filters.category) {
-        query.category = filters.category;
-      }
+      const [skills, total] = await Promise.all([
+        query.exec(),
+        Skill.countDocuments(filters),
+      ]);
 
-      if (filters.createdByAdmin !== undefined) {
-        query.createdByAdmin = filters.createdByAdmin;
-      }
-
-      const skills = await Skill.find(query)
-        .skip(skip)
-        .limit(limit)
-        .sort({ usageCount: -1, name: 1 });
-
-      const total = await Skill.countDocuments(query);
+      const pages = Math.ceil(total / limit);
 
       return {
         skills,
@@ -78,44 +65,87 @@ class SkillRepository {
           page,
           limit,
           total,
-          pages: Math.ceil(total / limit),
+          pages,
         },
       };
     } catch (error) {
-      throw error;
+      throw new Error(`Error getting all skills: ${error.message}`);
     }
   }
 
   // Search skills
-  async search(query, limit = 10) {
+  static async searchSkills(query, limit = 10) {
     try {
-      return await Skill.searchSkills(query, limit);
+      return await Skill.find({
+        $text: { $search: query },
+      })
+        .sort({ score: { $meta: "textScore" } })
+        .limit(limit)
+        .exec();
     } catch (error) {
-      throw error;
+      throw new Error(`Error searching skills: ${error.message}`);
     }
   }
 
   // Get popular skills
-  async getPopular(limit = 10) {
+  static async getPopularSkills(limit = 10) {
     try {
-      return await Skill.getPopularSkills(limit);
+      return await Skill.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "skills",
+            as: "users",
+          },
+        },
+        {
+          $addFields: {
+            userCount: { $size: "$users" },
+          },
+        },
+        {
+          $sort: { userCount: -1 },
+        },
+        {
+          $limit: limit,
+        },
+        {
+          $project: {
+            users: 0,
+          },
+        },
+      ]);
     } catch (error) {
-      throw error;
+      throw new Error(`Error getting popular skills: ${error.message}`);
     }
   }
 
   // Get skills by category
-  async getByCategory(category, page = 1, limit = 10) {
+  static async getSkillsByCategory(category, options = {}) {
     try {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = "name",
+        sortOrder = "asc",
+      } = options;
+
+      const query = Skill.find({ category });
+
+      const sortOptions = {};
+      sortOptions[sortBy] = sortOrder === "desc" ? -1 : 1;
+      query.sort(sortOptions);
+
       const skip = (page - 1) * limit;
-      const query = { category, isActive: true };
+      query.skip(skip).limit(limit);
 
-      const skills = await Skill.find(query)
-        .skip(skip)
-        .limit(limit)
-        .sort({ usageCount: -1, name: 1 });
+      const [skills, total] = await Promise.all([
+        query.exec(),
+        Skill.countDocuments({ category }),
+      ]);
 
-      const total = await Skill.countDocuments(query);
+      const pages = Math.ceil(total / limit);
 
       return {
         skills,
@@ -123,108 +153,335 @@ class SkillRepository {
           page,
           limit,
           total,
-          pages: Math.ceil(total / limit),
+          pages,
         },
       };
     } catch (error) {
-      throw error;
+      throw new Error(`Error getting skills by category: ${error.message}`);
     }
   }
 
-  // Increment usage count
-  async incrementUsage(id) {
+  // Update skill
+  static async update(skillId, updateData) {
     try {
-      const skill = await Skill.findById(id);
-      if (skill) {
-        return await skill.incrementUsage();
-      }
-      return null;
+      const skill = await Skill.findByIdAndUpdate(skillId, updateData, {
+        new: true,
+        runValidators: true,
+      });
+
+      return skill;
     } catch (error) {
-      throw error;
+      throw new Error(`Error updating skill: ${error.message}`);
     }
   }
 
-  // Toggle skill active status
-  async toggleActive(id, isActive) {
+  // Delete skill
+  static async delete(skillId) {
     try {
-      return await Skill.findByIdAndUpdate(
-        id,
-        { isActive },
-        { new: true, runValidators: true }
-      );
+      const skill = await Skill.findByIdAndDelete(skillId);
+      return skill;
     } catch (error) {
-      throw error;
+      throw new Error(`Error deleting skill: ${error.message}`);
     }
   }
 
   // Get skill statistics
-  async getSkillStats() {
+  static async getSkillStats() {
     try {
       const stats = await Skill.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "skills",
+            as: "users",
+          },
+        },
+        {
+          $addFields: {
+            userCount: { $size: "$users" },
+          },
+        },
         {
           $group: {
             _id: null,
             totalSkills: { $sum: 1 },
-            activeSkills: {
-              $sum: { $cond: [{ $eq: ["$isActive", true] }, 1, 0] },
-            },
-            adminCreatedSkills: {
-              $sum: { $cond: [{ $eq: ["$createdByAdmin", true] }, 1, 0] },
-            },
-            avgUsageCount: { $avg: "$usageCount" },
+            totalUsers: { $sum: "$userCount" },
+            averageUsersPerSkill: { $avg: "$userCount" },
           },
         },
       ]);
 
       const categoryStats = await Skill.aggregate([
-        { $match: { isActive: true } },
         {
           $group: {
             _id: "$category",
             count: { $sum: 1 },
-            avgUsage: { $avg: "$usageCount" },
           },
         },
-        { $sort: { count: -1 } },
+        {
+          $sort: { count: -1 },
+        },
       ]);
 
+      const totalSkills = await Skill.countDocuments();
+
       return {
-        ...stats[0],
-        categoryStats,
+        total: totalSkills,
+        ...(stats[0] && {
+          totalUsers: stats[0].totalUsers,
+          averageUsersPerSkill:
+            Math.round(stats[0].averageUsersPerSkill * 10) / 10,
+        }),
+        byCategory: categoryStats,
       };
     } catch (error) {
-      throw error;
+      throw new Error(`Error getting skill statistics: ${error.message}`);
     }
   }
 
-  // Get skills with usage count
-  async getSkillsWithUsage(limit = 20) {
+  // Get skills by multiple IDs
+  static async getSkillsByIds(skillIds) {
     try {
-      return await Skill.find({ isActive: true })
-        .sort({ usageCount: -1 })
-        .limit(limit);
+      if (!skillIds || !Array.isArray(skillIds) || skillIds.length === 0) {
+        return [];
+      }
+
+      return await Skill.find({
+        _id: { $in: skillIds },
+      }).exec();
     } catch (error) {
-      throw error;
+      throw new Error(`Error getting skills by IDs: ${error.message}`);
     }
   }
 
-  // Bulk create skills (for seeding)
-  async bulkCreate(skillsData) {
+  // Get categories
+  static async getCategories() {
     try {
-      return await Skill.insertMany(skillsData);
+      return await Skill.distinct("category").exec();
     } catch (error) {
-      throw error;
+      throw new Error(`Error getting categories: ${error.message}`);
     }
   }
 
-  // Get skills by IDs
-  async findByIds(ids) {
+  // Check if skill is used in swaps
+  static async isSkillUsedInSwaps(skillId) {
     try {
-      return await Skill.find({ _id: { $in: ids }, isActive: true });
+      const count = await Swap.countDocuments({
+        $or: [{ requestedSkillId: skillId }, { offeredSkillId: skillId }],
+      });
+
+      return count > 0;
     } catch (error) {
-      throw error;
+      throw new Error(
+        `Error checking if skill is used in swaps: ${error.message}`
+      );
+    }
+  }
+
+  // Get skills with user count
+  static async getSkillsWithUserCount(options = {}) {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = "userCount",
+        sortOrder = "desc",
+      } = options;
+
+      const skills = await Skill.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "skills",
+            as: "users",
+          },
+        },
+        {
+          $addFields: {
+            userCount: { $size: "$users" },
+          },
+        },
+        {
+          $project: {
+            users: 0,
+          },
+        },
+        {
+          $sort: { [sortBy]: sortOrder === "desc" ? -1 : 1 },
+        },
+        {
+          $skip: (page - 1) * limit,
+        },
+        {
+          $limit: limit,
+        },
+      ]);
+
+      const total = await Skill.countDocuments();
+
+      const pages = Math.ceil(total / limit);
+
+      return {
+        skills,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Error getting skills with user count: ${error.message}`);
+    }
+  }
+
+  // Get skills by user
+  static async getSkillsByUser(userId) {
+    try {
+      return await Skill.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "skills",
+            as: "users",
+          },
+        },
+        {
+          $match: {
+            "users._id": userId,
+          },
+        },
+        {
+          $project: {
+            users: 0,
+          },
+        },
+      ]);
+    } catch (error) {
+      throw new Error(`Error getting skills by user: ${error.message}`);
+    }
+  }
+
+  // Get skills not owned by user
+  static async getSkillsNotOwnedByUser(userId) {
+    try {
+      return await Skill.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "skills",
+            as: "users",
+          },
+        },
+        {
+          $match: {
+            "users._id": { $ne: userId },
+          },
+        },
+        {
+          $project: {
+            users: 0,
+          },
+        },
+      ]);
+    } catch (error) {
+      throw new Error(
+        `Error getting skills not owned by user: ${error.message}`
+      );
+    }
+  }
+
+  // Get skills by popularity range
+  static async getSkillsByPopularityRange(minUsers, maxUsers, options = {}) {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = "userCount",
+        sortOrder = "desc",
+      } = options;
+
+      const skills = await Skill.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "skills",
+            as: "users",
+          },
+        },
+        {
+          $addFields: {
+            userCount: { $size: "$users" },
+          },
+        },
+        {
+          $match: {
+            userCount: { $gte: minUsers, $lte: maxUsers },
+          },
+        },
+        {
+          $project: {
+            users: 0,
+          },
+        },
+        {
+          $sort: { [sortBy]: sortOrder === "desc" ? -1 : 1 },
+        },
+        {
+          $skip: (page - 1) * limit,
+        },
+        {
+          $limit: limit,
+        },
+      ]);
+
+      const total = await Skill.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "_id",
+            foreignField: "skills",
+            as: "users",
+          },
+        },
+        {
+          $addFields: {
+            userCount: { $size: "$users" },
+          },
+        },
+        {
+          $match: {
+            userCount: { $gte: minUsers, $lte: maxUsers },
+          },
+        },
+        {
+          $count: "total",
+        },
+      ]);
+
+      const totalCount = total[0]?.total || 0;
+      const pages = Math.ceil(totalCount / limit);
+
+      return {
+        skills,
+        pagination: {
+          page,
+          limit,
+          total: totalCount,
+          pages,
+        },
+      };
+    } catch (error) {
+      throw new Error(
+        `Error getting skills by popularity range: ${error.message}`
+      );
     }
   }
 }
 
-module.exports = new SkillRepository();
+module.exports = SkillRepository;
