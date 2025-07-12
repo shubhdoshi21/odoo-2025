@@ -1,4 +1,4 @@
-const UserRepository = require("../repositories/UserRepository");
+const UserRepository = require('../repositories/UserRepository');
 
 class UserController {
   // Get all users with pagination and filters
@@ -18,13 +18,12 @@ class UserController {
         filters.availability = Array.isArray(availability)
           ? availability
           : [availability];
-      // Override isPublic filter if explicitly provided (for admin purposes)
-      if (isPublic !== undefined) filters.isPublic = isPublic === "true";
+      if (isPublic !== undefined) filters.isPublic = isPublic === 'true';
 
       const result = await UserRepository.findAll(
         parseInt(page),
         parseInt(limit),
-        filters
+        filters,
       );
 
       res.status(200).json({
@@ -42,26 +41,57 @@ class UserController {
   // Search users
   async searchUsers(req, res) {
     try {
-      const { q, page = 1, limit = 10 } = req.query;
+      const { q, location, availability, page = 1, limit = 10 } = req.query;
 
-      if (!q) {
-        return res.status(400).json({
-          success: false,
-          message: "Search query is required",
+      console.log('Search request received:', {
+        q,
+        location,
+        availability,
+        page,
+        limit,
+      });
+
+      // Build search criteria
+      const searchCriteria = {};
+
+      if (q) searchCriteria.name = q;
+      if (location) searchCriteria.location = location;
+      if (availability) {
+        searchCriteria.availability = Array.isArray(availability)
+          ? availability
+          : [availability];
+      }
+
+      console.log('Search criteria built:', searchCriteria);
+
+      // If no search criteria provided, return all users
+      if (Object.keys(searchCriteria).length === 0) {
+        console.log('No search criteria, returning all users');
+        const result = await UserRepository.findAll(
+          parseInt(page),
+          parseInt(limit),
+          {},
+        );
+        return res.status(200).json({
+          success: true,
+          data: result,
         });
       }
 
       const result = await UserRepository.search(
-        q,
+        searchCriteria,
         parseInt(page),
-        parseInt(limit)
+        parseInt(limit),
       );
+
+      console.log('Search results:', result.users.length, 'users found');
 
       res.status(200).json({
         success: true,
         data: result,
       });
     } catch (error) {
+      console.error('Search error:', error);
       res.status(500).json({
         success: false,
         message: error.message,
@@ -98,7 +128,7 @@ class UserController {
       if (!user) {
         return res.status(404).json({
           success: false,
-          message: "User not found",
+          message: 'User not found',
         });
       }
 
@@ -106,7 +136,7 @@ class UserController {
       if (!user.isPublic && (!req.user || req.user._id.toString() !== id)) {
         return res.status(403).json({
           success: false,
-          message: "Access denied",
+          message: 'Access denied',
         });
       }
 
@@ -140,13 +170,13 @@ class UserController {
   async getUsersBySkill(req, res) {
     try {
       const { skillId } = req.params;
-      const { type = "offered", page = 1, limit = 10 } = req.query;
+      const { type = 'offered', page = 1, limit = 10 } = req.query;
 
       const result = await UserRepository.findBySkill(
         skillId,
         type,
         parseInt(page),
-        parseInt(limit)
+        parseInt(limit),
       );
 
       res.status(200).json({
